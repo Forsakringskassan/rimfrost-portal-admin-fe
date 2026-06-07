@@ -1,0 +1,38 @@
+# Build output
+dist
+dist-ssr
+
+# Dependencies
+node_modules
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment variables — .env (comment file) is tracked; the rest are not
+.env.development
+.env.local
+.env.test
+.env.production
+*.local
+
+# Test output
+playwright-report/
+test-results/
+blob-report/
+coverage/
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
