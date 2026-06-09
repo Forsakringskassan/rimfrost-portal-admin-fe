@@ -7,6 +7,8 @@ export const useOulStore = defineStore("oulStore", {
     isLoading: false,
     error: null as string | null,
     hasFetched: false,
+    sortAttribute: "skapad",
+    sortAscending: false,
   }),
   actions: {
     setUppgiftLista(uppgiftLista: OperativUppgiftItem[]) {
@@ -21,6 +23,10 @@ export const useOulStore = defineStore("oulStore", {
       if (error !== null) {
         this.hasFetched = true;
       }
+    },
+    setSort(attribute: string, ascending: boolean) {
+      this.sortAttribute = attribute;
+      this.sortAscending = ascending;
     },
   },
 });
