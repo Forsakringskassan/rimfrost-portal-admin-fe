@@ -23,6 +23,10 @@ export interface Sorteringsordning {
   entries: SorteringsordningEntry[];
 }
 
+export interface SorteringsordningSpec {
+  entries: SorteringsordningEntry[];
+}
+
 export interface HandlaggarId {
   typId: string;
   varde: string;
