@@ -27,6 +27,10 @@ export interface SorteringsordningSpec {
   entries: SorteringsordningEntry[];
 }
 
+export interface UpdateUppgiftRequest {
+  handlaggarId?: HandlaggarId | null;
+}
+
 export interface HandlaggarId {
   typId: string;
   varde: string;
