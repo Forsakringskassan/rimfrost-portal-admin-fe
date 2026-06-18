@@ -31,6 +31,12 @@ export interface UpdateUppgiftRequest {
   handlaggarId?: HandlaggarId | null;
 }
 
+export interface UppgiftPreviewResult {
+  total: number;
+
+  operativa_uppgifter: OperativUppgiftItem[];
+}
+
 export interface HandlaggarId {
   typId: string;
   varde: string;
