@@ -1,13 +1,22 @@
 import { env } from "../config/env";
-import type { Sorteringsordning } from "../types";
+import type { SorteringsordningPage } from "../types";
 
-export async function getSorteringsordningar(): Promise<Sorteringsordning[]> {
-  const response = await fetch(`${env.bffUrl}/admin/sorteringsordning`);
+export async function getSorteringsordningar(
+  limit: number,
+  offset = 0,
+): Promise<SorteringsordningPage> {
+  const params = new URLSearchParams({
+    limit: String(limit),
+    offset: String(offset),
+  });
+
+  const response = await fetch(
+    `${env.bffUrl}/admin/sorteringsordning?${params}`,
+  );
 
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}`);
   }
 
-  const data = await response.json();
-  return Array.isArray(data) ? data : [];
+  return response.json();
 }

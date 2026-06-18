@@ -27,6 +27,11 @@ export interface SorteringsordningSpec {
   entries: SorteringsordningEntry[];
 }
 
+export interface SorteringsordningPage {
+  total: number;
+  items: Sorteringsordning[];
+}
+
 export interface UpdateUppgiftRequest {
   handlaggarId?: HandlaggarId | null;
 }

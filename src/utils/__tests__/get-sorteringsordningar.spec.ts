@@ -13,6 +13,8 @@ const mockSorteringsordning = {
   ],
 };
 
+const mockPage = { total: 1, items: [mockSorteringsordning] };
+
 function mockFetch(data: unknown, ok = true) {
   vi.stubGlobal(
     "fetch",
@@ -29,29 +31,54 @@ describe("getSorteringsordningar", () => {
     vi.unstubAllGlobals();
   });
 
-  it("returns the list on success", async () => {
-    mockFetch([mockSorteringsordning]);
-    const result = await getSorteringsordningar();
-    expect(result).toHaveLength(1);
-    expect(result[0].id).toBe("f47ac10b-0001-0001-0001-000000000001");
-    expect(result[0].entries[0].sort_by?.field).toBe("skapad");
+  it("returns a page with items on success", async () => {
+    mockFetch(mockPage);
+    const result = await getSorteringsordningar(10);
+    expect(result.total).toBe(1);
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0].id).toBe("f47ac10b-0001-0001-0001-000000000001");
+    expect(result.items[0].entries[0].sort_by?.field).toBe("skapad");
   });
 
-  it("returns empty array when response is empty", async () => {
-    mockFetch([]);
-    const result = await getSorteringsordningar();
-    expect(result).toEqual([]);
+  it("returns empty page when OUL returns none", async () => {
+    mockFetch({ total: 0, items: [] });
+    const result = await getSorteringsordningar(10);
+    expect(result.total).toBe(0);
+    expect(result.items).toEqual([]);
   });
 
-  it("returns empty array when response is not an array", async () => {
-    mockFetch({ unexpected: "shape" });
-    const result = await getSorteringsordningar();
-    expect(result).toEqual([]);
+  it("sends limit and default offset as query params", async () => {
+    const fetchSpy = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve(mockPage),
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    await getSorteringsordningar(25);
+
+    const [url] = fetchSpy.mock.calls[0] as [string];
+    expect(url).toContain("limit=25");
+    expect(url).toContain("offset=0");
+  });
+
+  it("forwards a custom offset", async () => {
+    const fetchSpy = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve(mockPage),
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    await getSorteringsordningar(10, 20);
+
+    const [url] = fetchSpy.mock.calls[0] as [string];
+    expect(url).toContain("offset=20");
   });
 
   it("throws on HTTP error", async () => {
     mockFetch({}, false);
-    await expect(getSorteringsordningar()).rejects.toThrow("HTTP 500");
+    await expect(getSorteringsordningar(10)).rejects.toThrow("HTTP 500");
   });
 
   it("throws on network failure", async () => {
@@ -59,6 +86,6 @@ describe("getSorteringsordningar", () => {
       "fetch",
       vi.fn().mockRejectedValue(new TypeError("Failed to fetch")),
     );
-    await expect(getSorteringsordningar()).rejects.toThrow();
+    await expect(getSorteringsordningar(10)).rejects.toThrow();
   });
 });
