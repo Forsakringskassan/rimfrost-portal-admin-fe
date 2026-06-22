@@ -20,7 +20,10 @@ export async function getOulUppgifter(): Promise<void> {
           (item: { uppgiftId?: unknown }) => item?.uppgiftId != null,
         )
       : [];
-    store.setUppgiftLista(items);
+
+    const total: number =
+      typeof data.total === "number" ? data.total : items.length;
+    store.setUppgiftLista(items, total);
   } catch (error) {
     store.setError("Kunde inte hämta uppgifter från OUL. Försök igen senare.");
     console.error("Error loading OUL tasks:", error);

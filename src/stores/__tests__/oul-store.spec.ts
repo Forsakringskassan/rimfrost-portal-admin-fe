@@ -27,6 +27,7 @@ describe("oulStore", () => {
   it("has correct initial state", () => {
     const store = useOulStore();
     expect(store.uppgiftLista).toEqual([]);
+    expect(store.totalUppgifter).toBe(0);
     expect(store.isLoading).toBe(false);
     expect(store.error).toBeNull();
     expect(store.hasFetched).toBe(false);
@@ -37,15 +38,21 @@ describe("oulStore", () => {
   describe("setUppgiftLista", () => {
     it("replaces the list and marks hasFetched", () => {
       const store = useOulStore();
-      store.setUppgiftLista([mockUppgift]);
+      store.setUppgiftLista([mockUppgift], 1);
       expect(store.uppgiftLista).toHaveLength(1);
       expect(store.hasFetched).toBe(true);
     });
 
+    it("stores the total count", () => {
+      const store = useOulStore();
+      store.setUppgiftLista([mockUppgift], 42);
+      expect(store.totalUppgifter).toBe(42);
+    });
+
     it("clears the list when called with an empty array", () => {
       const store = useOulStore();
-      store.setUppgiftLista([mockUppgift]);
-      store.setUppgiftLista([]);
+      store.setUppgiftLista([mockUppgift], 1);
+      store.setUppgiftLista([], 0);
       expect(store.uppgiftLista).toEqual([]);
     });
   });

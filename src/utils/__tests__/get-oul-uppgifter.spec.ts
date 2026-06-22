@@ -41,15 +41,17 @@ describe("getOulUppgifter", () => {
 
   it("populates the store with items on success", async () => {
     // eslint-disable-next-line camelcase -- API uses snake_case
-    mockFetch({ operativa_uppgifter: [mockItem] });
+    mockFetch({ total: 1, operativa_uppgifter: [mockItem] });
     const store = useOulStore();
     await getOulUppgifter();
     expect(store.uppgiftLista).toHaveLength(1);
     expect(store.uppgiftLista[0].uppgiftId).toBe("test-001");
+    expect(store.totalUppgifter).toBe(1);
   });
 
   it("filters out items missing uppgiftId", async () => {
     mockFetch({
+      total: 2,
       // eslint-disable-next-line camelcase -- API uses snake_case
       operativa_uppgifter: [mockItem, { handlaggningId: "no-id" }],
     });
@@ -60,7 +62,7 @@ describe("getOulUppgifter", () => {
 
   it("handles an empty list", async () => {
     // eslint-disable-next-line camelcase -- API uses snake_case
-    mockFetch({ operativa_uppgifter: [] });
+    mockFetch({ total: 0, operativa_uppgifter: [] });
     const store = useOulStore();
     await getOulUppgifter();
     expect(store.uppgiftLista).toEqual([]);
@@ -92,14 +94,14 @@ describe("getOulUppgifter", () => {
     expect(store.error).not.toBeNull();
 
     // eslint-disable-next-line camelcase -- API uses snake_case
-    mockFetch({ operativa_uppgifter: [mockItem] });
+    mockFetch({ total: 1, operativa_uppgifter: [mockItem] });
     await getOulUppgifter();
     expect(store.error).toBeNull();
   });
 
   it("sets isLoading to false when done", async () => {
     // eslint-disable-next-line camelcase -- API uses snake_case
-    mockFetch({ operativa_uppgifter: [] });
+    mockFetch({ total: 0, operativa_uppgifter: [] });
     const store = useOulStore();
     await getOulUppgifter();
     expect(store.isLoading).toBe(false);
