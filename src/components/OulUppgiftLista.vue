@@ -68,6 +68,15 @@ onMounted(async () => {
         Inga uppgifter hittades i OUL.
       </p>
 
+      <p
+        v-if="store.totalUppgifter > store.uppgiftLista.length"
+        class="truncation-warning"
+      >
+        Visar {{ store.uppgiftLista.length }} av
+        {{ store.totalUppgifter }} uppgifter. Kontakta administratören för att
+        justera hämtningsgränsen.
+      </p>
+
       <FSortFilterDataset
         v-else
         :data="store.uppgiftLista"
@@ -148,6 +157,15 @@ onMounted(async () => {
 .status-badge--avbruten {
   background-color: #f8d7da;
   color: #721c24;
+}
+
+.truncation-warning {
+  color: #856404;
+  background-color: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 1rem;
 }
 
 .error-message {

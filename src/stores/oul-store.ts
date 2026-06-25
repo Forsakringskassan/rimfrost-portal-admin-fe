@@ -4,6 +4,7 @@ import type { OperativUppgiftItem } from "../types";
 export const useOulStore = defineStore("oulStore", {
   state: () => ({
     uppgiftLista: [] as OperativUppgiftItem[],
+    totalUppgifter: 0,
     isLoading: false,
     error: null as string | null,
     hasFetched: false,
@@ -11,8 +12,9 @@ export const useOulStore = defineStore("oulStore", {
     sortAscending: false,
   }),
   actions: {
-    setUppgiftLista(uppgiftLista: OperativUppgiftItem[]) {
+    setUppgiftLista(uppgiftLista: OperativUppgiftItem[], total: number) {
       this.uppgiftLista = uppgiftLista;
+      this.totalUppgifter = total;
       this.hasFetched = true;
     },
     setLoading(loading: boolean) {

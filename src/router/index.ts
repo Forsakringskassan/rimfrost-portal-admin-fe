@@ -25,6 +25,11 @@ const routes: RouteRecordRaw[] = [
     component: () => import("../components/KonfigurationVy.vue"),
   },
   {
+    path: "/konfiguration/skapa",
+    name: "konfiguration-skapa",
+    component: () => import("../components/SkapaKonfiguration.vue"),
+  },
+  {
     path: "/:pathMatch(.*)*",
     redirect: "/oul-prioritering",
   },

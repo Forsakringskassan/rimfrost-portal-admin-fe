@@ -32,67 +32,14 @@ import AdminSektioner from "./components/AdminSektioner.vue";
       </template>
 
       <template #content>
-        <div class="left-nav-custom">
-          <div class="nav-content">
-            <AdminSektioner />
-          </div>
-        </div>
+        <AdminSektioner />
       </template>
 
       <router-view />
     </f-layout-left-panel>
 
     <template #footer>
-      <div
-        class="container-fluid"
-        style="padding: 1rem 0; text-align: center"
-      ></div>
+      <div></div>
     </template>
   </f-layout-application-template>
 </template>
-
-<style>
-body.layout-application-template__body {
-  height: 100vh !important;
-  min-height: unset !important;
-  overflow: hidden;
-}
-
-.layout-application-template {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-.layout-application-template__header {
-  flex-shrink: 0;
-}
-
-.layout-application-template__main {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-}
-
-div:has(.left-nav-custom) {
-  display: flex;
-  flex-direction: column;
-  height: 100% !important;
-  overflow: hidden !important;
-}
-
-.left-nav-custom {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-}
-
-.nav-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  min-height: 0;
-}
-</style>
