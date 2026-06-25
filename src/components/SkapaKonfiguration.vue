@@ -86,6 +86,7 @@ function newEntry(): FormEntry {
   };
 }
 
+const namn = ref("");
 const entries = ref<FormEntry[]>([newEntry()]);
 const isSubmitting = ref(false);
 const error = ref<string | null>(null);
@@ -136,6 +137,7 @@ function onFieldChange(constraint: FormConstraint): void {
 
 function buildSpec() {
   return {
+    namn: namn.value,
     entries: entries.value.map((e): SorteringsordningEntry => {
       const entry: SorteringsordningEntry = {};
 
@@ -211,6 +213,7 @@ async function handleSubmit(): Promise<void> {
     <p v-if="error" class="error-message">{{ error }}</p>
 
     <FValidationForm @submit.prevent="handleSubmit">
+      <FTextField v-model="namn" v-validation.required> Namn </FTextField>
       <template #error-message>
         <p>Fyll i alla obligatoriska fält innan du fortsätter.</p>
       </template>

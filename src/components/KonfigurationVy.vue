@@ -98,10 +98,8 @@ onMounted(load);
 
       <FInteractiveTable v-else :rows="sorteringsordningar" key-attribute="id">
         <template #default="{ row }">
-          <FTableColumn name="id" title="ID" shrink>
-            <span class="id-cell" :title="row.id">
-              {{ row.id.slice(-8) }}
-            </span>
+          <FTableColumn name="namn" title="Namn">
+            {{ row.namn }}
           </FTableColumn>
           <FTableColumn name="skapad" title="Skapad">
             {{ formatDate(row.skapad) }}
@@ -148,12 +146,6 @@ onMounted(load);
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 1.5rem;
-}
-
-.id-cell {
-  font-family: monospace;
-  font-size: 0.8rem;
-  color: #666;
 }
 
 .badge--default {
