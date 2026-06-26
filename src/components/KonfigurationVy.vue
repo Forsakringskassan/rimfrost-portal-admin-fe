@@ -126,7 +126,7 @@ onMounted(load);
                 :disabled="row.id === defaultId"
                 @click="handleSetDefault(row.id)"
               >
-                Sätt som default
+                Ange som default
               </FButton>
               <button
                 type="button"
