@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
-import { FButton, FInteractiveTable, FLoader, FTableColumn } from "@fkui/vue";
+import {
+  FButton,
+  FIcon,
+  FInteractiveTable,
+  FLoader,
+  FTableColumn,
+} from "@fkui/vue";
 import { useRouter } from "vue-router";
 import type { Sorteringsordning } from "../types";
 import { deleteSorteringsordning } from "../utils/delete-sorteringsordning";
@@ -113,22 +119,29 @@ onMounted(load);
             </span>
           </FTableColumn>
           <FTableColumn name="actions" title="Åtgärder" shrink>
-            <FButton
-              type="button"
-              variant="secondary"
-              :disabled="row.id === defaultId"
-              @click="handleSetDefault(row.id)"
-            >
-              Sätt som default
-            </FButton>
-            <FButton
-              type="button"
-              variant="tertiary"
-              :disabled="row.id === defaultId"
-              @click="handleDelete(row.id)"
-            >
-              Ta bort
-            </FButton>
+            <div class="action-cell">
+              <FButton
+                type="button"
+                variant="secondary"
+                :disabled="row.id === defaultId"
+                @click="handleSetDefault(row.id)"
+              >
+                Sätt som default
+              </FButton>
+              <button
+                type="button"
+                class="icon-button"
+                :disabled="row.id === defaultId"
+                :title="
+                  row.id === defaultId
+                    ? 'En sorteringsordning som är satt till default kan inte tas bort'
+                    : 'Ta bort sorteringsordning'
+                "
+                @click="handleDelete(row.id)"
+              >
+                <FIcon name="trashcan" />
+              </button>
+            </div>
           </FTableColumn>
         </template>
       </FInteractiveTable>
@@ -146,6 +159,33 @@ onMounted(load);
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 1.5rem;
+}
+
+.action-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.action-cell :deep(.button) {
+  margin-bottom: 0;
+}
+
+.icon-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  color: inherit;
+}
+
+.icon-button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 .badge--default {
