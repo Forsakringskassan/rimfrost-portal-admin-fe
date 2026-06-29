@@ -12,7 +12,6 @@ import type { Sorteringsordning } from "../types";
 import { deleteSorteringsordning } from "../utils/delete-sorteringsordning";
 import { getDefaultSorteringsordning } from "../utils/get-default-sorteringsordning";
 import { getSorteringsordningar } from "../utils/get-sorteringsordningar";
-import { setDefaultSorteringsordning } from "../utils/set-default-sorteringsordning";
 
 const router = useRouter();
 
@@ -35,19 +34,6 @@ async function load(): Promise<void> {
     error.value = "Kunde inte hämta sorteringsordningar.";
   } finally {
     isLoading.value = false;
-  }
-}
-
-async function handleSetDefault(id: string): Promise<void> {
-  try {
-    const result = await setDefaultSorteringsordning(id);
-    if (result === null) {
-      error.value = "Sorteringsordningen hittades inte.";
-      return;
-    }
-    defaultId.value = id;
-  } catch {
-    error.value = "Kunde inte sätta default sorteringsordning.";
   }
 }
 
@@ -119,15 +105,15 @@ onMounted(load);
             </span>
           </FTableColumn>
           <FTableColumn name="actions" title="Åtgärder" shrink>
-            <div class="action-cell">
-              <FButton
+            <div class="action-cell align-items-center">
+              <button
                 type="button"
-                variant="secondary"
-                :disabled="row.id === defaultId"
-                @click="handleSetDefault(row.id)"
+                class="icon-button"
+                title="Redigera sorteringsordning"
+                @click="router.push(`/konfiguration/${row.id}/redigera`)"
               >
-                Ange som default
-              </FButton>
+                <FIcon name="pen" />
+              </button>
               <button
                 type="button"
                 class="icon-button"
@@ -150,6 +136,12 @@ onMounted(load);
 </template>
 
 <style scoped>
+.align-items-center {
+  display: flex;
+  margin-top: 3px;
+  align-items: center;
+}
+
 .konfiguration-vy {
   padding: 1.5rem 2rem;
 }
@@ -166,10 +158,6 @@ onMounted(load);
   align-items: center;
   gap: 0.5rem;
   white-space: nowrap;
-}
-
-.action-cell :deep(.button) {
-  margin-bottom: 0;
 }
 
 .icon-button {
