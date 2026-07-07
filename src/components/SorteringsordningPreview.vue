@@ -31,7 +31,10 @@ async function fetchPreview(): Promise<void> {
   isLoading.value = true;
   error.value = null;
   try {
-    const result = await previewSorteringsordning(props.spec, PREVIEW_LIMIT);
+    const spec = props.spec.namn
+      ? props.spec
+      : { ...props.spec, namn: "Förhandsvisning" };
+    const result = await previewSorteringsordning(spec, PREVIEW_LIMIT);
     total.value = result.total;
     uppgifter.value = result.operativa_uppgifter;
   } catch {
