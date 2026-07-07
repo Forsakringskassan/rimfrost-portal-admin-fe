@@ -12,6 +12,7 @@ import type { Sorteringsordning } from "../types";
 import { deleteSorteringsordning } from "../utils/delete-sorteringsordning";
 import { getDefaultSorteringsordning } from "../utils/get-default-sorteringsordning";
 import { getSorteringsordningar } from "../utils/get-sorteringsordningar";
+import { setDefaultSorteringsordning } from "../utils/set-default-sorteringsordning";
 
 const router = useRouter();
 
@@ -34,6 +35,15 @@ async function load(): Promise<void> {
     error.value = "Kunde inte hämta sorteringsordningar.";
   } finally {
     isLoading.value = false;
+  }
+}
+
+async function handleSetDefault(id: string): Promise<void> {
+  try {
+    await setDefaultSorteringsordning(id);
+    defaultId.value = id;
+  } catch {
+    error.value = "Kunde inte sätta default sorteringsordning.";
   }
 }
 
@@ -127,6 +137,14 @@ onMounted(load);
               >
                 <FIcon name="trashcan" />
               </button>
+              <FButton
+                type="button"
+                variant="tertiary"
+                :disabled="row.id === defaultId"
+                @click="handleSetDefault(row.id)"
+              >
+                Ange som default
+              </FButton>
             </div>
           </FTableColumn>
         </template>
