@@ -8,6 +8,7 @@ import { getDefaultSorteringsordning } from "../utils/get-default-sorteringsordn
 import { getSorteringsordning } from "../utils/get-sorteringsordning";
 import { setDefaultSorteringsordning } from "../utils/set-default-sorteringsordning";
 import { updateSorteringsordning } from "../utils/update-sorteringsordning";
+import SorteringsordningPreview from "./SorteringsordningPreview.vue";
 
 const DATE_FIELDS = new Set(["skapad", "planerad_till"]);
 const EQ_ONLY_FIELDS = new Set(["uppgift_id"]);
@@ -436,6 +437,8 @@ onMounted(load);
             + Lägg till prioriteringsgrupp
           </FButton>
         </div>
+
+        <SorteringsordningPreview :spec="buildSpec()" />
 
         <div class="default-row">
           <label class="default-label">

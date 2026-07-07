@@ -5,6 +5,7 @@ import { FButton, FSelectField, FTextField, FValidationForm } from "@fkui/vue";
 import { useRouter } from "vue-router";
 import type { Constraint, SortBy, SorteringsordningEntry } from "../types";
 import { createSorteringsordning } from "../utils/create-sorteringsordning";
+import SorteringsordningPreview from "./SorteringsordningPreview.vue";
 
 const DATE_FIELDS = new Set(["skapad", "planerad_till"]);
 const EQ_ONLY_FIELDS = new Set(["uppgift_id"]);
@@ -387,6 +388,8 @@ async function handleSubmit(): Promise<void> {
           + Lägg till prioriteringsgrupp
         </FButton>
       </div>
+
+      <SorteringsordningPreview :spec="buildSpec()" />
 
       <div class="form-actions">
         <FButton type="submit" :disabled="isSubmitting">
