@@ -40,7 +40,11 @@ async function load(): Promise<void> {
 
 async function handleSetDefault(id: string): Promise<void> {
   try {
-    await setDefaultSorteringsordning(id);
+    const result = await setDefaultSorteringsordning(id);
+    if (result === null) {
+      error.value = "Sorteringsordningen hittades inte.";
+      return;
+    }
     defaultId.value = id;
   } catch {
     error.value = "Kunde inte sätta default sorteringsordning.";
