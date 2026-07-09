@@ -20,10 +20,12 @@ export interface SorteringsordningEntry {
 export interface Sorteringsordning {
   id: string;
   skapad: string;
+  namn: string;
   entries: SorteringsordningEntry[];
 }
 
 export interface SorteringsordningSpec {
+  namn: string;
   entries: SorteringsordningEntry[];
 }
 

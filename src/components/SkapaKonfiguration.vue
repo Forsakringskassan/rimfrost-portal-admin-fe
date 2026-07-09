@@ -5,6 +5,7 @@ import { FButton, FSelectField, FTextField, FValidationForm } from "@fkui/vue";
 import { useRouter } from "vue-router";
 import type { Constraint, SortBy, SorteringsordningEntry } from "../types";
 import { createSorteringsordning } from "../utils/create-sorteringsordning";
+import SorteringsordningPreview from "./SorteringsordningPreview.vue";
 
 const DATE_FIELDS = new Set(["skapad", "planerad_till"]);
 const EQ_ONLY_FIELDS = new Set(["uppgift_id"]);
@@ -86,6 +87,7 @@ function newEntry(): FormEntry {
   };
 }
 
+const namn = ref("");
 const entries = ref<FormEntry[]>([newEntry()]);
 const isSubmitting = ref(false);
 const error = ref<string | null>(null);
@@ -136,6 +138,7 @@ function onFieldChange(constraint: FormConstraint): void {
 
 function buildSpec() {
   return {
+    namn: namn.value,
     entries: entries.value.map((e): SorteringsordningEntry => {
       const entry: SorteringsordningEntry = {};
 
@@ -211,6 +214,7 @@ async function handleSubmit(): Promise<void> {
     <p v-if="error" class="error-message">{{ error }}</p>
 
     <FValidationForm @submit.prevent="handleSubmit">
+      <FTextField v-model="namn" v-validation.required> Namn </FTextField>
       <template #error-message>
         <p>Fyll i alla obligatoriska fält innan du fortsätter.</p>
       </template>
@@ -384,6 +388,8 @@ async function handleSubmit(): Promise<void> {
           + Lägg till prioriteringsgrupp
         </FButton>
       </div>
+
+      <SorteringsordningPreview :spec="buildSpec()" />
 
       <div class="form-actions">
         <FButton type="submit" :disabled="isSubmitting">
