@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
+import { onMounted, ref } from "vue";
 import type { SortOrder } from "@fkui/vue";
 import {
+  FButton,
   FInteractiveTable,
   FLoader,
   FSortFilterDataset,
@@ -10,8 +11,27 @@ import {
 import { useOulStore } from "../stores/oul-store";
 import type { OperativUppgiftItem } from "../types";
 import { getOulUppgifter } from "../utils/get-oul-uppgifter";
+import { unassignUppgift } from "../utils/unassign-uppgift";
 
 const store = useOulStore();
+
+const unassigningIds = ref(new Set<string>());
+const unassignError = ref<string | null>(null);
+
+async function handleUnassign(row: OperativUppgiftItem): Promise<void> {
+  unassignError.value = null;
+  unassigningIds.value.add(row.uppgiftId);
+  try {
+    const updated = await unassignUppgift(row.uppgiftId);
+    if (updated) {
+      store.updateUppgift(updated);
+    }
+  } catch {
+    unassignError.value = `Kunde inte lägga tillbaka uppgift ${row.uppgiftId.slice(-8)}.`;
+  } finally {
+    unassigningIds.value.delete(row.uppgiftId);
+  }
+}
 
 function formatDate(dateString: string): string {
   if (!dateString) {
@@ -62,6 +82,7 @@ onMounted(async () => {
     </f-loader>
 
     <p v-if="store.error" class="error-message">{{ store.error }}</p>
+    <p v-if="unassignError" class="error-message">{{ unassignError }}</p>
 
     <template v-if="!store.isLoading && !store.error && store.hasFetched">
       <p v-if="store.uppgiftLista.length === 0" class="body">
@@ -111,6 +132,22 @@ onMounted(async () => {
               </FTableColumn>
               <FTableColumn name="handlaggarId" title="Handläggare">
                 {{ handlaggareLabel(row) }}
+              </FTableColumn>
+              <FTableColumn name="actions" title="" shrink>
+                <FButton
+                  type="button"
+                  variant="tertiary"
+                  :disabled="
+                    !row.handlaggarId || unassigningIds.has(row.uppgiftId)
+                  "
+                  @click="handleUnassign(row)"
+                >
+                  {{
+                    unassigningIds.has(row.uppgiftId)
+                      ? "Lägger tillbaka..."
+                      : "Lägg tillbaka"
+                  }}
+                </FButton>
               </FTableColumn>
             </template>
           </FInteractiveTable>
