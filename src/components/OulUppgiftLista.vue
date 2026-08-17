@@ -2,10 +2,10 @@
 import { computed, onMounted, ref } from "vue";
 import type { SortOrder } from "@fkui/vue";
 import {
-  FButton,
   FInteractiveTable,
   FLoader,
   FSortFilterDataset,
+  FTableButton,
   FTableColumn,
 } from "@fkui/vue";
 import { useOulStore } from "../stores/oul-store";
@@ -143,20 +143,17 @@ onMounted(async () => {
                 {{ row.handlaggarLabel }}
               </FTableColumn>
               <FTableColumn name="actions" title="" shrink>
-                <FButton
-                  type="button"
-                  variant="tertiary"
-                  :disabled="
-                    !row.handlaggarId || unassigningIds.has(row.uppgiftId)
-                  "
+                <FTableButton
+                  v-if="row.handlaggarId"
+                  label
                   @click="handleUnassign(row)"
                 >
                   {{
                     unassigningIds.has(row.uppgiftId)
                       ? "Lägger tillbaka..."
-                      : "Lägg tillbaka"
+                      : "Avallokera"
                   }}
-                </FButton>
+                </FTableButton>
               </FTableColumn>
             </template>
           </FInteractiveTable>
