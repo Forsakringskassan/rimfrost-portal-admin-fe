@@ -7,11 +7,11 @@ import {
 const routes: RouteRecordRaw[] = [
   {
     path: "/",
-    redirect: "/oul-prioritering",
+    redirect: "/operativa-uppgifter",
   },
   {
-    path: "/oul-prioritering",
-    name: "oul-prioritering",
+    path: "/operativa-uppgifter",
+    name: "operativa-uppgifter",
     component: () => import("../components/OulUppgiftLista.vue"),
   },
   {
@@ -36,7 +36,7 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: "/:pathMatch(.*)*",
-    redirect: "/oul-prioritering",
+    redirect: "/operativa-uppgifter",
   },
 ];
 

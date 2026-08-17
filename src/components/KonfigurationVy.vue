@@ -83,7 +83,7 @@ onMounted(load);
   <div class="konfiguration-vy">
     <div>
       <h1 id="main-title" class="h1">Konfiguration</h1>
-      <p class="body">Hantera sorteringsordningar för OUL-prioritering.</p>
+      <p class="body">Hantera sorteringsordningar för operativa-uppgifter.</p>
     </div>
     <FButton @click="router.push('/konfiguration/skapa')"> Skapa ny </FButton>
 

@@ -6,12 +6,12 @@ import {
   test,
 } from "./fixtures";
 
-test.describe("OUL-prioritering", () => {
+test.describe("operativa-uppgifter", () => {
   test("visar sidans rubrik", async ({ page }) => {
     await mockAdminApis(page);
     await gotoAdmin(page);
     await expect(
-      page.getByRole("heading", { name: "OUL-prioritering" }),
+      page.getByRole("heading", { name: "operativa-uppgifter" }),
     ).toBeVisible();
   });
 

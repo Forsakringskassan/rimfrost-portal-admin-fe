@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import type { SortOrder } from "@fkui/vue";
 import {
   FButton,
@@ -54,6 +54,13 @@ function onSortChange(sortState: SortOrder) {
   store.setSort(String(sortState.attribute), sortState.ascending);
 }
 
+const sortableUppgiftLista = computed(() =>
+  store.uppgiftLista.map((item) => ({
+    ...item,
+    handlaggarLabel: handlaggareLabel(item),
+  })),
+);
+
 onMounted(async () => {
   if (!store.hasFetched) {
     try {
@@ -67,11 +74,7 @@ onMounted(async () => {
 
 <template>
   <div class="oul-uppgift-lista">
-    <h1 id="main-title" class="h1">OUL-prioritering</h1>
-    <p class="body">
-      Visar alla operativa uppgifter i uppgiftslagret. Prioriteringsordning
-      bestäms av kolumnen "Skapad".
-    </p>
+    <h1 id="main-title" class="h1">Operativa uppgifter</h1>
 
     <f-loader
       :show="store.isLoading"
@@ -100,8 +103,14 @@ onMounted(async () => {
 
       <FSortFilterDataset
         v-else
-        :data="store.uppgiftLista"
-        :sortable-attributes="{ skapad: 'Skapad', regel: 'Regeltyp' }"
+        :data="sortableUppgiftLista"
+        :sortable-attributes="{
+          skapad: 'Skapad',
+          regel: 'Regeltyp',
+          status: 'Status',
+          roll: 'Roll',
+          handlaggarLabel: 'Handläggare',
+        }"
         :default-sort-attribute="store.sortAttribute"
         :default-sort-ascending="store.sortAscending"
         @used-sort-attributes="onSortChange"
@@ -114,7 +123,7 @@ onMounted(async () => {
                   {{ row.handlaggningId.slice(-8) }}
                 </span>
               </FTableColumn>
-              <FTableColumn name="status" title="Status">
+              <FTableColumn name="status" title="Status" sortable>
                 <span
                   :class="`status-badge status-badge--${row.status?.toLowerCase() ?? 'okand'}`"
                 >
@@ -124,14 +133,14 @@ onMounted(async () => {
               <FTableColumn name="regel" title="Regel" sortable>
                 {{ row.regel }}
               </FTableColumn>
-              <FTableColumn name="roll" title="Roll">
+              <FTableColumn name="roll" title="Roll" sortable>
                 {{ row.roll }}
               </FTableColumn>
               <FTableColumn name="skapad" title="Skapad" sortable>
                 {{ formatDate(row.skapad) }}
               </FTableColumn>
-              <FTableColumn name="handlaggarId" title="Handläggare">
-                {{ handlaggareLabel(row) }}
+              <FTableColumn name="handlaggarLabel" title="Handläggare" sortable>
+                {{ row.handlaggarLabel }}
               </FTableColumn>
               <FTableColumn name="actions" title="" shrink>
                 <FButton
