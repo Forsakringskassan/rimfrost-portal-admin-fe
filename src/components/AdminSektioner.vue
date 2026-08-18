@@ -7,13 +7,13 @@ const router = useRouter();
 const route = useRoute();
 
 const sektioner = [
-  { label: "OUL-prioritering", route: "oul-prioritering" },
+  { label: "Operativa uppgifter", route: "operativa-uppgifter" },
   { label: "Statistik", route: "statistik" },
   { label: "Sorteringsordningar", route: "sorteringsordningar" },
 ];
 
 const currentRoute = computed(
-  () => route.name?.toString() ?? "oul-prioritering",
+  () => route.name?.toString() ?? "operativa-uppgifter",
 );
 
 function onSelectedRoute(routeId: string) {

@@ -13,7 +13,7 @@ import AdminSektioner from "./components/AdminSektioner.vue";
     <template #header>
       <f-page-header skip-link="main-title">
         <RouterLink
-          to="/oul-prioritering"
+          to="/operativa-uppgifter"
           style="
             font-weight: bold;
             font-size: 1.25rem;

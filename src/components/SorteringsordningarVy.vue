@@ -83,7 +83,7 @@ onMounted(load);
   <div class="sorteringsordningar-vy">
     <div>
       <h1 id="main-title" class="h1">Sorteringsordningar</h1>
-      <p class="body">Hantera sorteringsordningar för OUL-prioritering.</p>
+      <p class="body">Hantera sorteringsordningar för operativa uppgifter.</p>
     </div>
     <FButton @click="router.push('/sorteringsordningar/skapa')">
       Skapa ny

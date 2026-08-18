@@ -30,5 +30,13 @@ export const useOulStore = defineStore("oulStore", {
       this.sortAttribute = attribute;
       this.sortAscending = ascending;
     },
+    updateUppgift(updated: OperativUppgiftItem) {
+      const index = this.uppgiftLista.findIndex(
+        (u) => u.uppgiftId === updated.uppgiftId,
+      );
+      if (index !== -1) {
+        this.uppgiftLista[index] = updated;
+      }
+    },
   },
 });

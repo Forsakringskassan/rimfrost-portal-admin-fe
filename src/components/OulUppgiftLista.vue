@@ -1,17 +1,37 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
+import { computed, onMounted, ref } from "vue";
 import type { SortOrder } from "@fkui/vue";
 import {
   FInteractiveTable,
   FLoader,
   FSortFilterDataset,
+  FTableButton,
   FTableColumn,
 } from "@fkui/vue";
 import { useOulStore } from "../stores/oul-store";
 import type { OperativUppgiftItem } from "../types";
 import { getOulUppgifter } from "../utils/get-oul-uppgifter";
+import { unassignUppgift } from "../utils/unassign-uppgift";
 
 const store = useOulStore();
+
+const unassigningIds = ref(new Set<string>());
+const unassignError = ref<string | null>(null);
+
+async function handleUnassign(row: OperativUppgiftItem): Promise<void> {
+  unassignError.value = null;
+  unassigningIds.value.add(row.uppgiftId);
+  try {
+    const updated = await unassignUppgift(row.uppgiftId);
+    if (updated) {
+      store.updateUppgift(updated);
+    }
+  } catch {
+    unassignError.value = `Kunde inte lägga tillbaka uppgift ${row.uppgiftId.slice(-8)}.`;
+  } finally {
+    unassigningIds.value.delete(row.uppgiftId);
+  }
+}
 
 function formatDate(dateString: string): string {
   if (!dateString) {
@@ -34,6 +54,13 @@ function onSortChange(sortState: SortOrder) {
   store.setSort(String(sortState.attribute), sortState.ascending);
 }
 
+const sortableUppgiftLista = computed(() =>
+  store.uppgiftLista.map((item) => ({
+    ...item,
+    handlaggarLabel: handlaggareLabel(item),
+  })),
+);
+
 onMounted(async () => {
   if (!store.hasFetched) {
     try {
@@ -47,11 +74,7 @@ onMounted(async () => {
 
 <template>
   <div class="oul-uppgift-lista">
-    <h1 id="main-title" class="h1">OUL-prioritering</h1>
-    <p class="body">
-      Visar alla operativa uppgifter i uppgiftslagret. Prioriteringsordning
-      bestäms av kolumnen "Skapad".
-    </p>
+    <h1 id="main-title" class="h1">Operativa uppgifter</h1>
 
     <f-loader
       :show="store.isLoading"
@@ -62,6 +85,7 @@ onMounted(async () => {
     </f-loader>
 
     <p v-if="store.error" class="error-message">{{ store.error }}</p>
+    <p v-if="unassignError" class="error-message">{{ unassignError }}</p>
 
     <template v-if="!store.isLoading && !store.error && store.hasFetched">
       <p v-if="store.uppgiftLista.length === 0" class="body">
@@ -79,8 +103,14 @@ onMounted(async () => {
 
       <FSortFilterDataset
         v-else
-        :data="store.uppgiftLista"
-        :sortable-attributes="{ skapad: 'Skapad', regel: 'Regeltyp' }"
+        :data="sortableUppgiftLista"
+        :sortable-attributes="{
+          skapad: 'Skapad',
+          regel: 'Regeltyp',
+          status: 'Status',
+          roll: 'Roll',
+          handlaggarLabel: 'Handläggare',
+        }"
         :default-sort-attribute="store.sortAttribute"
         :default-sort-ascending="store.sortAscending"
         @used-sort-attributes="onSortChange"
@@ -93,7 +123,7 @@ onMounted(async () => {
                   {{ row.handlaggningId.slice(-8) }}
                 </span>
               </FTableColumn>
-              <FTableColumn name="status" title="Status">
+              <FTableColumn name="status" title="Status" sortable>
                 <span
                   :class="`status-badge status-badge--${row.status?.toLowerCase() ?? 'okand'}`"
                 >
@@ -103,14 +133,27 @@ onMounted(async () => {
               <FTableColumn name="regel" title="Regel" sortable>
                 {{ row.regel }}
               </FTableColumn>
-              <FTableColumn name="roll" title="Roll">
+              <FTableColumn name="roll" title="Roll" sortable>
                 {{ row.roll }}
               </FTableColumn>
               <FTableColumn name="skapad" title="Skapad" sortable>
                 {{ formatDate(row.skapad) }}
               </FTableColumn>
-              <FTableColumn name="handlaggarId" title="Handläggare">
-                {{ handlaggareLabel(row) }}
+              <FTableColumn name="handlaggarLabel" title="Handläggare" sortable>
+                {{ row.handlaggarLabel }}
+              </FTableColumn>
+              <FTableColumn name="actions" title="" shrink>
+                <FTableButton
+                  v-if="row.handlaggarId"
+                  label
+                  @click="handleUnassign(row)"
+                >
+                  {{
+                    unassigningIds.has(row.uppgiftId)
+                      ? "Lägger tillbaka..."
+                      : "Ta bort handläggare"
+                  }}
+                </FTableButton>
               </FTableColumn>
             </template>
           </FInteractiveTable>
