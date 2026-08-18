@@ -11,7 +11,6 @@ All data hämtas via `fetch` mot en enda BFF, ingen websocket/polling.
 ```text
 src/
 ├── router/            # Ruttdefinitioner: /operativa-uppgifter, /statistik, /konfiguration(/...)
-├── views/             # OulUppgiftLista, StatistikVy (placeholder), Konfiguration(Skapa/Redigera)Vy
 ├── components/         # AdminSektioner (vänsternavigering), SorteringsordningPreview m.fl.
 ├── stores/            # Pinia: oul-store (uppgiftslista), sorteringsordning-relaterat state
 ├── utils/             # fetch-wrappers mot BFF
