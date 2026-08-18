@@ -242,7 +242,7 @@ async function handleSubmit(): Promise<void> {
     if (isDefault.value) {
       await setDefaultSorteringsordning(id);
     }
-    await router.push("/konfiguration");
+    await router.push("/sorteringsordningar");
   } catch {
     error.value = "Kunde inte spara sorteringsordningen.";
   } finally {
@@ -254,7 +254,7 @@ onMounted(load);
 </script>
 
 <template>
-  <div class="redigera-konfiguration">
+  <div class="redigera-sorteringsordning">
     <h1 id="main-title" class="h1">Redigera sorteringsordning</h1>
 
     <p v-if="error" class="error-message">{{ error }}</p>
@@ -454,7 +454,7 @@ onMounted(load);
           <FButton
             type="button"
             variant="secondary"
-            @click="router.push('/konfiguration')"
+            @click="router.push('/sorteringsordningar')"
           >
             Avbryt
           </FButton>
@@ -465,7 +465,7 @@ onMounted(load);
 </template>
 
 <style scoped>
-.redigera-konfiguration {
+.redigera-sorteringsordning {
   padding: 1.5rem 2rem;
   max-width: 900px;
 }

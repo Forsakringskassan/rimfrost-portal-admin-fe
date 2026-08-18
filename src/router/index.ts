@@ -20,19 +20,19 @@ const routes: RouteRecordRaw[] = [
     component: () => import("../components/StatistikVy.vue"),
   },
   {
-    path: "/konfiguration",
-    name: "konfiguration",
-    component: () => import("../components/KonfigurationVy.vue"),
+    path: "/sorteringsordningar",
+    name: "sorteringsordningar",
+    component: () => import("../components/SorteringsordningarVy.vue"),
   },
   {
-    path: "/konfiguration/skapa",
-    name: "konfiguration-skapa",
-    component: () => import("../components/SkapaKonfiguration.vue"),
+    path: "/sorteringsordningar/skapa",
+    name: "sorteringsordningar-skapa",
+    component: () => import("../components/SkapaSorteringsordning.vue"),
   },
   {
-    path: "/konfiguration/:id/redigera",
-    name: "konfiguration-redigera",
-    component: () => import("../components/RedigeraKonfiguration.vue"),
+    path: "/sorteringsordningar/:id/redigera",
+    name: "sorteringsordningar-redigera",
+    component: () => import("../components/RedigeraSorteringsordning.vue"),
   },
   {
     path: "/:pathMatch(.*)*",

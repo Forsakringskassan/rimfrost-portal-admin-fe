@@ -9,7 +9,7 @@ const route = useRoute();
 const sektioner = [
   { label: "Operativa uppgifter", route: "operativa-uppgifter" },
   { label: "Statistik", route: "statistik" },
-  { label: "Konfiguration", route: "konfiguration" },
+  { label: "Sorteringsordningar", route: "sorteringsordningar" },
 ];
 
 const currentRoute = computed(

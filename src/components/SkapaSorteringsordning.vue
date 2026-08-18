@@ -184,7 +184,7 @@ async function handleSubmit(): Promise<void> {
   isSubmitting.value = true;
   try {
     await createSorteringsordning(buildSpec());
-    await router.push("/konfiguration");
+    await router.push("/sorteringsordningar");
   } catch {
     error.value = "Kunde inte skapa sorteringsordningen.";
   } finally {
@@ -194,7 +194,7 @@ async function handleSubmit(): Promise<void> {
 </script>
 
 <template>
-  <div class="skapa-konfiguration">
+  <div class="skapa-sorteringsordning">
     <h1 id="main-title" class="h1">Skapa sorteringsordning</h1>
 
     <div class="page-intro">
@@ -398,7 +398,7 @@ async function handleSubmit(): Promise<void> {
         <FButton
           type="button"
           variant="secondary"
-          @click="router.push('/konfiguration')"
+          @click="router.push('/sorteringsordningar')"
         >
           Avbryt
         </FButton>
@@ -408,7 +408,7 @@ async function handleSubmit(): Promise<void> {
 </template>
 
 <style scoped>
-.skapa-konfiguration {
+.skapa-sorteringsordning {
   padding: 1.5rem 2rem;
   max-width: 900px;
 }
