@@ -83,4 +83,4 @@ ska kunna observera och justera uppgiftsprioritering utan direktåtkomst till ba
 
 Gränssnittet talar uteslutande med Portal Admin BFF, som i sin tur integrerar mot OUL:s
 administrationstjänst. Gränssnittet har ingen egen affärslogik för uppgifts- eller
-sorteringsordningsdata — all sanning ägs bakomliggande.
+sorteringsordningsdata.
