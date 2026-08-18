@@ -9,7 +9,7 @@ const route = useRoute();
 const sektioner = [
   { label: "OUL-prioritering", route: "oul-prioritering" },
   { label: "Statistik", route: "statistik" },
-  { label: "Konfiguration", route: "konfiguration" },
+  { label: "Sorteringsordningar", route: "sorteringsordningar" },
 ];
 
 const currentRoute = computed(
