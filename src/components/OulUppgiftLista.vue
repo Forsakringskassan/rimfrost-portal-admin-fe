@@ -151,7 +151,7 @@ onMounted(async () => {
                   {{
                     unassigningIds.has(row.uppgiftId)
                       ? "Lägger tillbaka..."
-                      : "Avallokera"
+                      : "Ta bort handläggare"
                   }}
                 </FTableButton>
               </FTableColumn>
