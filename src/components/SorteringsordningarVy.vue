@@ -80,12 +80,14 @@ onMounted(load);
 </script>
 
 <template>
-  <div class="konfiguration-vy">
+  <div class="sorteringsordningar-vy">
     <div>
-      <h1 id="main-title" class="h1">Konfiguration</h1>
+      <h1 id="main-title" class="h1">Sorteringsordningar</h1>
       <p class="body">Hantera sorteringsordningar för OUL-prioritering.</p>
     </div>
-    <FButton @click="router.push('/konfiguration/skapa')"> Skapa ny </FButton>
+    <FButton @click="router.push('/sorteringsordningar/skapa')">
+      Skapa ny
+    </FButton>
 
     <f-loader
       :show="isLoading"
@@ -124,7 +126,7 @@ onMounted(load);
                 type="button"
                 class="icon-button"
                 title="Redigera sorteringsordning"
-                @click="router.push(`/konfiguration/${row.id}/redigera`)"
+                @click="router.push(`/sorteringsordningar/${row.id}/redigera`)"
               >
                 <FIcon name="pen" />
               </button>
@@ -164,7 +166,7 @@ onMounted(load);
   align-items: center;
 }
 
-.konfiguration-vy {
+.sorteringsordningar-vy {
   padding: 1.5rem 2rem;
 }
 
