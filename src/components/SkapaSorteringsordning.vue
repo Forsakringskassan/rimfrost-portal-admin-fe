@@ -1,8 +1,15 @@
 <!-- eslint-disable camelcase -->
 <script setup lang="ts">
-import { ref } from "vue";
-import { FButton, FSelectField, FTextField, FValidationForm } from "@fkui/vue";
-import { useRouter } from "vue-router";
+import { computed, onMounted, onUnmounted, ref } from "vue";
+import {
+  FButton,
+  FSelectField,
+  FTextField,
+  FTooltip,
+  FValidationForm,
+  useModal,
+} from "@fkui/vue";
+import { onBeforeRouteLeave, useRouter } from "vue-router";
 import type { Constraint, SortBy, SorteringsordningEntry } from "../types";
 import { createSorteringsordning } from "../utils/create-sorteringsordning";
 import SorteringsordningPreview from "./SorteringsordningPreview.vue";
@@ -30,6 +37,26 @@ const OPERATOR_LABELS: Record<string, string> = {
   offset_to_now: "är de senaste",
 };
 
+const FIELD_EXAMPLES: Record<string, string> = {
+  uppgift_id: "är 99999-1234-5678-9012.",
+  skapad: "är ett datum mellan 2026-01-01 och 2026-01-31.",
+  planerad_till: "är de senaste 7 dagarna.",
+  status: "är Tilldelad.",
+  regel: "är BEKRAFTA_BESLUT.",
+  roll: "är Handläggning.",
+  verksamhetslogik: "är VAB.",
+  beskrivning: "innehåller husdjur.",
+};
+
+const VALUE_EXAMPLES: Record<string, string> = {
+  uppgift_id: "99999-1234-5678-9012",
+  status: "Tilldelad",
+  regel: "BEKRAFTA_BESLUT",
+  roll: "Handläggning",
+  verksamhetslogik: "VAB",
+  beskrivning: "husdjur",
+};
+
 function operatorsForField(field: string): string[] {
   if (DATE_FIELDS.has(field)) {
     return ["between", "offset_to_now"];
@@ -38,6 +65,19 @@ function operatorsForField(field: string): string[] {
     return ["eq"];
   }
   return ["eq", "contains"];
+}
+
+function sortDirectionLabel(field: string, direction: "asc" | "desc"): string {
+  if (DATE_FIELDS.has(field)) {
+    return direction === "asc"
+      ? "Stigande (äldst först)"
+      : "Fallande (nyast först)";
+  }
+  return direction === "asc" ? "Stigande (A till Ö)" : "Fallande (Ö till A)";
+}
+
+function fieldLabel(field: string): string {
+  return CONSTRAINT_FIELDS.find((f) => f.value === field)?.label ?? field;
 }
 
 interface FormConstraint {
@@ -66,6 +106,29 @@ function newConstraint(): FormConstraint {
   };
 }
 
+function isConstraintUntouched(constraint: FormConstraint): boolean {
+  const fresh = newConstraint();
+  return (
+    constraint.field === fresh.field &&
+    constraint.operator === fresh.operator &&
+    constraint.value === fresh.value &&
+    constraint.from === fresh.from &&
+    constraint.to === fresh.to &&
+    constraint.offsetDays === fresh.offsetDays
+  );
+}
+
+function isEntryUntouched(entry: FormEntry): boolean {
+  const constraint = entry.constraints[0];
+  return (
+    entry.constraints.length === 1 &&
+    constraint !== undefined &&
+    isConstraintUntouched(constraint) &&
+    entry.sortByField === "" &&
+    entry.sortByDirection === "asc"
+  );
+}
+
 function entryLabel(index: number): string {
   if (entries.value.length === 1) {
     return "Grupp 1";
@@ -92,12 +155,64 @@ const entries = ref<FormEntry[]>([newEntry()]);
 const isSubmitting = ref(false);
 const error = ref<string | null>(null);
 const router = useRouter();
+const { confirmModal } = useModal();
+
+const pristineSnapshot = JSON.stringify({
+  namn: namn.value,
+  entries: entries.value,
+});
+const hasUnsavedChanges = computed(
+  () =>
+    JSON.stringify({ namn: namn.value, entries: entries.value }) !==
+    pristineSnapshot,
+);
+let justSaved = false;
+
+function handleBeforeUnload(event: BeforeUnloadEvent): void {
+  if (hasUnsavedChanges.value && !justSaved) {
+    event.preventDefault();
+  }
+}
+
+onMounted(() => {
+  window.addEventListener("beforeunload", handleBeforeUnload);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("beforeunload", handleBeforeUnload);
+});
+
+onBeforeRouteLeave(async () => {
+  if (!hasUnsavedChanges.value || justSaved) {
+    return true;
+  }
+  return await confirmModal({
+    heading: "Osparade ändringar",
+    content:
+      "Du har osparade ändringar som kommer att gå förlorade om du lämnar sidan. Vill du fortsätta?",
+    confirm: "Lämna sidan",
+    dismiss: "Stanna kvar",
+  });
+});
 
 function addEntry(): void {
   entries.value.push(newEntry());
 }
 
-function removeEntry(index: number): void {
+async function removeEntry(index: number): Promise<void> {
+  const entry = entries.value[index];
+  if (entry && !isEntryUntouched(entry)) {
+    const confirmed = await confirmModal({
+      heading: "Ta bort grupp",
+      content:
+        "Är du säker på att du vill ta bort gruppen och alla dess filter?",
+      confirm: "Ta bort",
+      dismiss: "Avbryt",
+    });
+    if (!confirmed) {
+      return;
+    }
+  }
   entries.value.splice(index, 1);
 }
 
@@ -121,7 +236,22 @@ function addConstraint(entryIndex: number): void {
   entries.value[entryIndex]?.constraints.push(newConstraint());
 }
 
-function removeConstraint(entryIndex: number, constraintIndex: number): void {
+async function removeConstraint(
+  entryIndex: number,
+  constraintIndex: number,
+): Promise<void> {
+  const constraint = entries.value[entryIndex]?.constraints[constraintIndex];
+  if (constraint && !isConstraintUntouched(constraint)) {
+    const confirmed = await confirmModal({
+      heading: "Ta bort filter",
+      content: "Är du säker på att du vill ta bort filtret?",
+      confirm: "Ta bort",
+      dismiss: "Avbryt",
+    });
+    if (!confirmed) {
+      return;
+    }
+  }
   entries.value[entryIndex]?.constraints.splice(constraintIndex, 1);
 }
 
@@ -184,6 +314,7 @@ async function handleSubmit(): Promise<void> {
   isSubmitting.value = true;
   try {
     await createSorteringsordning(buildSpec());
+    justSaved = true;
     await router.push("/sorteringsordningar");
   } catch {
     error.value = "Kunde inte skapa sorteringsordningen.";
@@ -281,6 +412,29 @@ async function handleSubmit(): Promise<void> {
                 @change="onFieldChange(constraint)"
               >
                 <template #label>Uppgiftens egenskap</template>
+                <template
+                  v-if="entryIndex === 0 && constraintIndex === 0"
+                  #tooltip
+                >
+                  <FTooltip
+                    screen-reader-text="Läs mer om uppgiftens egenskap"
+                    header-tag="h2"
+                  >
+                    <template #header>Uppgiftens egenskap</template>
+                    <template #body>
+                      <p>
+                        Väljer vilken egenskap uppgiften ska filtreras på och
+                        avgör om en uppgift hamnar i den här gruppen. Sortering
+                        väljs separat nedan under "Sortering inom gruppen".
+                        <span class="tooltip-example">
+                          Exempel:
+                          <strong>{{ fieldLabel(constraint.field) }}</strong>
+                          {{ FIELD_EXAMPLES[constraint.field] }}
+                        </span>
+                      </p>
+                    </template>
+                  </FTooltip>
+                </template>
                 <option
                   v-for="f in CONSTRAINT_FIELDS"
                   :key="f.value"
@@ -292,6 +446,71 @@ async function handleSubmit(): Promise<void> {
 
               <FSelectField v-model="constraint.operator">
                 <template #label>Villkor</template>
+                <template
+                  v-if="entryIndex === 0 && constraintIndex === 0"
+                  #tooltip
+                >
+                  <FTooltip
+                    screen-reader-text="Läs mer om villkor"
+                    header-tag="h2"
+                  >
+                    <template #header>Villkor</template>
+                    <template #body>
+                      <template v-if="DATE_FIELDS.has(constraint.field)">
+                        <p>Bestämmer hur datumet ska jämföras.</p>
+                        <p>
+                          <strong>"Är ett datum mellan"</strong>
+                          <br />
+                          Uppgiften måste ha ett datum som ligger inom det
+                          angivna intervallet.
+                          <span class="tooltip-example">
+                            Exempel: Skapad
+                            <strong>är ett datum mellan</strong> 2026-01-01 och
+                            2026-01-31.
+                          </span>
+                        </p>
+                        <p>
+                          <strong>"Är de senaste"</strong>
+                          <br />
+                          Uppgiften måste ha ett datum inom det angivna antalet
+                          dagar bakåt från idag.
+                          <span class="tooltip-example">
+                            Exempel: Planerad till
+                            <strong>är de senaste</strong> 7 dagarna.
+                          </span>
+                        </p>
+                      </template>
+                      <template v-else>
+                        <p>
+                          Bestämmer hur uppgiftens egenskap ska jämföras med
+                          värdet.
+                        </p>
+                        <p>
+                          <strong>Är</strong>
+                          <br />
+                          Uppgiftens faktiska värde måste stämma exakt med
+                          Värde.
+                          <span class="tooltip-example">
+                            Exempel: {{ fieldLabel(constraint.field) }}
+                            <strong>är</strong>
+                            {{ VALUE_EXAMPLES[constraint.field] }}
+                          </span>
+                        </p>
+                        <p>
+                          <strong>Innehåller</strong>
+                          <br />
+                          Värdet behöver bara finnas någonstans i uppgiftens
+                          faktiska värde.
+                          <span class="tooltip-example">
+                            Exempel: {{ fieldLabel(constraint.field) }}
+                            <strong>innehåller</strong>
+                            {{ VALUE_EXAMPLES[constraint.field] }}
+                          </span>
+                        </p>
+                      </template>
+                    </template>
+                  </FTooltip>
+                </template>
                 <option
                   v-for="op in operatorsForField(constraint.field)"
                   :key="op"
@@ -308,6 +527,27 @@ async function handleSubmit(): Promise<void> {
                   type="date"
                 >
                   Från och med
+                  <template
+                    v-if="entryIndex === 0 && constraintIndex === 0"
+                    #tooltip
+                  >
+                    <FTooltip
+                      screen-reader-text="Läs mer om från och med"
+                      header-tag="h2"
+                    >
+                      <template #header>Från och med</template>
+                      <template #body>
+                        <p>
+                          Det tidigaste datumet som ska ingå i intervallet.
+                          <span class="tooltip-example">
+                            Exempel: {{ fieldLabel(constraint.field) }} är ett
+                            datum mellan <strong>2026-01-01</strong> och
+                            2026-01-31.
+                          </span>
+                        </p>
+                      </template>
+                    </FTooltip>
+                  </template>
                 </FTextField>
                 <FTextField
                   v-model="constraint.to"
@@ -315,6 +555,27 @@ async function handleSubmit(): Promise<void> {
                   type="date"
                 >
                   Till och med
+                  <template
+                    v-if="entryIndex === 0 && constraintIndex === 0"
+                    #tooltip
+                  >
+                    <FTooltip
+                      screen-reader-text="Läs mer om till och med"
+                      header-tag="h2"
+                    >
+                      <template #header>Till och med</template>
+                      <template #body>
+                        <p>
+                          Det senaste datumet som ska ingå i intervallet.
+                          <span class="tooltip-example">
+                            Exempel: {{ fieldLabel(constraint.field) }} är ett
+                            datum mellan 2026-01-01 och
+                            <strong>2026-01-31</strong>.
+                          </span>
+                        </p>
+                      </template>
+                    </FTooltip>
+                  </template>
                 </FTextField>
               </template>
               <template v-else-if="constraint.operator === 'offset_to_now'">
@@ -324,11 +585,57 @@ async function handleSubmit(): Promise<void> {
                   type="number"
                 >
                   Antal dagar tillbaka
+                  <template
+                    v-if="entryIndex === 0 && constraintIndex === 0"
+                    #tooltip
+                  >
+                    <FTooltip
+                      screen-reader-text="Läs mer om antal dagar tillbaka"
+                      header-tag="h2"
+                    >
+                      <template #header>Antal dagar tillbaka</template>
+                      <template #body>
+                        <p>
+                          Antal dagar bakåt i tiden, räknat från idag, som
+                          uppgiften måste ligga inom.
+                          <span class="tooltip-example">
+                            Exempel: {{ fieldLabel(constraint.field) }} är de
+                            senaste <strong>7</strong> dagarna.
+                          </span>
+                        </p>
+                      </template>
+                    </FTooltip>
+                  </template>
                 </FTextField>
               </template>
               <template v-else>
                 <FTextField v-model="constraint.value" v-validation.required>
                   Värde
+                  <template
+                    v-if="entryIndex === 0 && constraintIndex === 0"
+                    #tooltip
+                  >
+                    <FTooltip
+                      screen-reader-text="Läs mer om värde"
+                      header-tag="h2"
+                    >
+                      <template #header>Värde</template>
+                      <template #body>
+                        <p>
+                          Det du jämför uppgiftens egenskap mot, enligt
+                          villkoret ovan.
+                          <span class="tooltip-example">
+                            Exempel: {{ fieldLabel(constraint.field) }}
+                            {{ OPERATOR_LABELS[constraint.operator] }}
+                            <strong>{{
+                              VALUE_EXAMPLES[constraint.field]
+                            }}</strong
+                            >.
+                          </span>
+                        </p>
+                      </template>
+                    </FTooltip>
+                  </template>
                 </FTextField>
               </template>
 
@@ -375,8 +682,12 @@ async function handleSubmit(): Promise<void> {
                 v-model="entry.sortByDirection"
               >
                 <template #label>Ordning</template>
-                <option value="asc">Stigande (äldst/lägst först)</option>
-                <option value="desc">Fallande (nyast/högst först)</option>
+                <option value="asc">
+                  {{ sortDirectionLabel(entry.sortByField, "asc") }}
+                </option>
+                <option value="desc">
+                  {{ sortDirectionLabel(entry.sortByField, "desc") }}
+                </option>
               </FSelectField>
             </div>
           </div>
@@ -411,6 +722,11 @@ async function handleSubmit(): Promise<void> {
 .skapa-sorteringsordning {
   padding: 1.5rem 2rem;
   max-width: 900px;
+}
+
+.tooltip-example {
+  display: block;
+  margin-top: 0.5rem;
 }
 
 .page-intro {
@@ -454,7 +770,8 @@ async function handleSubmit(): Promise<void> {
 
 .entry-label {
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 1.125rem;
+  line-height: 3rem;
   flex: 1;
 }
 
@@ -463,6 +780,10 @@ async function handleSubmit(): Promise<void> {
   gap: 0.25rem;
   align-items: center;
   flex-wrap: wrap;
+}
+
+.entry-controls button {
+  margin: 0;
 }
 
 .entry-body {

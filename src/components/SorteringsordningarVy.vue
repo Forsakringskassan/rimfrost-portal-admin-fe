@@ -6,6 +6,7 @@ import {
   FInteractiveTable,
   FLoader,
   FTableColumn,
+  useModal,
 } from "@fkui/vue";
 import { useRouter } from "vue-router";
 import type { Sorteringsordning } from "../types";
@@ -15,6 +16,7 @@ import { getSorteringsordningar } from "../utils/get-sorteringsordningar";
 import { setDefaultSorteringsordning } from "../utils/set-default-sorteringsordning";
 
 const router = useRouter();
+const { confirmModal } = useModal();
 
 const sorteringsordningar = ref<Sorteringsordning[]>([]);
 const defaultId = ref<string | null>(null);
@@ -52,6 +54,17 @@ async function handleSetDefault(id: string): Promise<void> {
 }
 
 async function handleDelete(id: string): Promise<void> {
+  const confirmed = await confirmModal({
+    heading: "Ta bort sorteringsordning",
+    content:
+      "Är du säker på att du vill ta bort sorteringsordningen? Åtgärden kan inte ångras.",
+    confirm: "Ta bort",
+    dismiss: "Avbryt",
+  });
+  if (!confirmed) {
+    return;
+  }
+
   try {
     const result = await deleteSorteringsordning(id);
     if (result === null) {
