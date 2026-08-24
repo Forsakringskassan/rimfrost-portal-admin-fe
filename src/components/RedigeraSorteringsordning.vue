@@ -185,6 +185,7 @@ const entries = ref<FormEntry[]>([newEntry()]);
 const isDefault = ref(false);
 const isLoading = ref(false);
 const isSubmitting = ref(false);
+const isRemoving = ref(false);
 const error = ref<string | null>(null);
 
 let pristineSnapshot = "";
@@ -236,6 +237,8 @@ async function load(): Promise<void> {
     ]);
     if (sorteringsordning === null) {
       error.value = "Sorteringsordningen hittades inte.";
+      // pristineSnapshot stays "" here; hasUnsavedChanges guards on that,
+      // so the unsaved-changes warning never fires when nothing loaded.
       return;
     }
     namn.value = sorteringsordning.namn;
@@ -261,20 +264,25 @@ function addEntry(): void {
 }
 
 async function removeEntry(index: number): Promise<void> {
-  const entry = entries.value[index];
-  if (entry && !isEntryUntouched(entry)) {
-    const confirmed = await confirmModal({
-      heading: "Ta bort grupp",
-      content:
-        "Är du säker på att du vill ta bort gruppen och alla dess filter?",
-      confirm: "Ta bort",
-      dismiss: "Avbryt",
-    });
-    if (!confirmed) {
-      return;
+  isRemoving.value = true;
+  try {
+    const entry = entries.value[index];
+    if (entry && !isEntryUntouched(entry)) {
+      const confirmed = await confirmModal({
+        heading: "Ta bort grupp",
+        content:
+          "Är du säker på att du vill ta bort gruppen och alla dess filter?",
+        confirm: "Ta bort",
+        dismiss: "Avbryt",
+      });
+      if (!confirmed) {
+        return;
+      }
     }
+    entries.value.splice(index, 1);
+  } finally {
+    isRemoving.value = false;
   }
-  entries.value.splice(index, 1);
 }
 
 function moveUp(index: number): void {
@@ -301,19 +309,24 @@ async function removeConstraint(
   entryIndex: number,
   constraintIndex: number,
 ): Promise<void> {
-  const constraint = entries.value[entryIndex]?.constraints[constraintIndex];
-  if (constraint && !isConstraintUntouched(constraint)) {
-    const confirmed = await confirmModal({
-      heading: "Ta bort filter",
-      content: "Är du säker på att du vill ta bort filtret?",
-      confirm: "Ta bort",
-      dismiss: "Avbryt",
-    });
-    if (!confirmed) {
-      return;
+  isRemoving.value = true;
+  try {
+    const constraint = entries.value[entryIndex]?.constraints[constraintIndex];
+    if (constraint && !isConstraintUntouched(constraint)) {
+      const confirmed = await confirmModal({
+        heading: "Ta bort filter",
+        content: "Är du säker på att du vill ta bort filtret?",
+        confirm: "Ta bort",
+        dismiss: "Avbryt",
+      });
+      if (!confirmed) {
+        return;
+      }
     }
+    entries.value[entryIndex]?.constraints.splice(constraintIndex, 1);
+  } finally {
+    isRemoving.value = false;
   }
-  entries.value[entryIndex]?.constraints.splice(constraintIndex, 1);
 }
 
 function onFieldChange(constraint: FormConstraint): void {
@@ -375,10 +388,10 @@ async function handleSubmit(): Promise<void> {
   isSubmitting.value = true;
   try {
     await updateSorteringsordning(id, buildSpec());
+    justSaved = true;
     if (isDefault.value) {
       await setDefaultSorteringsordning(id);
     }
-    justSaved = true;
     await router.push("/sorteringsordningar");
   } catch {
     error.value = "Kunde inte spara sorteringsordningen.";
@@ -432,7 +445,7 @@ onMounted(load);
               <FButton
                 type="button"
                 variant="tertiary"
-                :disabled="entries.length === 1"
+                :disabled="entries.length === 1 || isRemoving"
                 @click="removeEntry(entryIndex)"
               >
                 Ta bort grupp
@@ -699,6 +712,7 @@ onMounted(load);
                 <FButton
                   type="button"
                   variant="tertiary"
+                  :disabled="isRemoving"
                   @click="removeConstraint(entryIndex, constraintIndex)"
                 >
                   Ta bort filter
