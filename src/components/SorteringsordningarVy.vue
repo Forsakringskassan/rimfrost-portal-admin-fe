@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import {
   FButton,
   FIcon,
   FInteractiveTable,
   FLoader,
+  FSortFilterDataset,
   FTableColumn,
   useModal,
 } from "@fkui/vue";
@@ -22,6 +23,13 @@ const sorteringsordningar = ref<Sorteringsordning[]>([]);
 const defaultId = ref<string | null>(null);
 const isLoading = ref(false);
 const error = ref<string | null>(null);
+
+const sortableSorteringsordningar = computed(() =>
+  sorteringsordningar.value.map((row) => ({
+    ...row,
+    entriesCount: row.entries.length,
+  })),
+);
 
 async function load(): Promise<void> {
   isLoading.value = true;
@@ -117,57 +125,84 @@ onMounted(load);
         Inga sorteringsordningar är konfigurerade.
       </p>
 
-      <FInteractiveTable v-else :rows="sorteringsordningar" key-attribute="id">
-        <template #default="{ row }">
-          <FTableColumn name="namn" title="Namn">
-            {{ row.namn }}
-          </FTableColumn>
-          <FTableColumn name="skapad" title="Skapad">
-            {{ formatDate(row.skapad) }}
-          </FTableColumn>
-          <FTableColumn name="entries" title="Antal regler" shrink>
-            {{ row.entries.length }}
-          </FTableColumn>
-          <FTableColumn name="default" title="Status" shrink>
-            <span v-if="row.id === defaultId" class="badge badge--default">
-              Default
-            </span>
-          </FTableColumn>
-          <FTableColumn name="actions" title="Åtgärder" shrink>
-            <div class="action-cell align-items-center">
-              <button
-                type="button"
-                class="icon-button"
-                title="Redigera sorteringsordning"
-                @click="router.push(`/sorteringsordningar/${row.id}/redigera`)"
-              >
-                <FIcon name="pen" />
-              </button>
-              <button
-                type="button"
-                class="icon-button"
-                :disabled="row.id === defaultId"
-                :title="
-                  row.id === defaultId
-                    ? 'En sorteringsordning som är satt till default kan inte tas bort'
-                    : 'Ta bort sorteringsordning'
-                "
-                @click="handleDelete(row.id)"
-              >
-                <FIcon name="trashcan" />
-              </button>
-              <FButton
-                type="button"
-                variant="tertiary"
-                :disabled="row.id === defaultId"
-                @click="handleSetDefault(row.id)"
-              >
-                Ange som default
-              </FButton>
-            </div>
-          </FTableColumn>
-        </template>
-      </FInteractiveTable>
+      <div v-else class="table-section">
+        <FSortFilterDataset
+          :data="sortableSorteringsordningar"
+          :sortable-attributes="{
+            namn: 'Namn',
+            skapad: 'Skapad',
+            entriesCount: 'Antal regler',
+          }"
+          default-sort-attribute="namn"
+          :default-sort-ascending="true"
+          filter-label="Sök på namn"
+          :filter-attributes="['namn']"
+        >
+          <template #default="{ sortFilterResult }">
+            <FInteractiveTable :rows="sortFilterResult" key-attribute="id">
+              <template #default="{ row }">
+                <FTableColumn name="namn" title="Namn" sortable>
+                  {{ row.namn }}
+                </FTableColumn>
+                <FTableColumn name="skapad" title="Skapad" sortable>
+                  {{ formatDate(row.skapad) }}
+                </FTableColumn>
+                <FTableColumn
+                  name="entriesCount"
+                  title="Antal regler"
+                  shrink
+                  sortable
+                >
+                  {{ row.entriesCount }}
+                </FTableColumn>
+                <FTableColumn name="default" title="Status" shrink>
+                  <span
+                    v-if="row.id === defaultId"
+                    class="badge badge--default"
+                  >
+                    Default
+                  </span>
+                </FTableColumn>
+                <FTableColumn name="actions" title="Åtgärder" shrink>
+                  <div class="action-cell align-items-center">
+                    <button
+                      type="button"
+                      class="icon-button"
+                      title="Redigera sorteringsordning"
+                      @click="
+                        router.push(`/sorteringsordningar/${row.id}/redigera`)
+                      "
+                    >
+                      <FIcon name="pen" />
+                    </button>
+                    <button
+                      type="button"
+                      class="icon-button"
+                      :disabled="row.id === defaultId"
+                      :title="
+                        row.id === defaultId
+                          ? 'En sorteringsordning som är satt till default kan inte tas bort'
+                          : 'Ta bort sorteringsordning'
+                      "
+                      @click="handleDelete(row.id)"
+                    >
+                      <FIcon name="trashcan" />
+                    </button>
+                    <FButton
+                      type="button"
+                      variant="tertiary"
+                      :disabled="row.id === defaultId"
+                      @click="handleSetDefault(row.id)"
+                    >
+                      Ange som default
+                    </FButton>
+                  </div>
+                </FTableColumn>
+              </template>
+            </FInteractiveTable>
+          </template>
+        </FSortFilterDataset>
+      </div>
     </template>
   </div>
 </template>
@@ -181,6 +216,10 @@ onMounted(load);
 
 .sorteringsordningar-vy {
   padding: 1.5rem 2rem;
+}
+
+.table-section {
+  margin-top: -4.25rem;
 }
 
 .page-header {
