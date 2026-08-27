@@ -11,7 +11,12 @@ import {
 } from "@fkui/vue";
 import { onBeforeRouteLeave, useRouter } from "vue-router";
 import type { Constraint, SortBy, SorteringsordningEntry } from "../types";
+import {
+  loadActiveSorteringsordningIds,
+  saveActiveSorteringsordningIds,
+} from "../utils/active-sorteringsordningar";
 import { createSorteringsordning } from "../utils/create-sorteringsordning";
+import { setDefaultSorteringsordning } from "../utils/set-default-sorteringsordning";
 import SorteringsordningPreview from "./SorteringsordningPreview.vue";
 
 const DATE_FIELDS = new Set(["skapad", "planerad_till"]);
@@ -152,6 +157,8 @@ function newEntry(): FormEntry {
 
 const namn = ref("");
 const entries = ref<FormEntry[]>([newEntry()]);
+const isDefault = ref(false);
+const isActive = ref(false);
 const isSubmitting = ref(false);
 const isRemoving = ref(false);
 const error = ref<string | null>(null);
@@ -323,12 +330,37 @@ function buildSpec() {
 async function handleSubmit(): Promise<void> {
   error.value = null;
   isSubmitting.value = true;
+
+  let created;
   try {
-    await createSorteringsordning(buildSpec());
+    created = await createSorteringsordning(buildSpec());
     justSaved = true;
-    await router.push("/sorteringsordningar");
   } catch {
     error.value = "Kunde inte skapa sorteringsordningen.";
+    isSubmitting.value = false;
+    return;
+  }
+
+  if (isActive.value) {
+    const ids = loadActiveSorteringsordningIds();
+    ids.add(created.id);
+    saveActiveSorteringsordningIds(ids);
+  }
+
+  if (isDefault.value) {
+    try {
+      await setDefaultSorteringsordning(created.id);
+    } catch {
+      // The sorteringsordning was created, but couldn't be set as default —
+      // don't block navigation or risk a duplicate on retry.
+    }
+  }
+
+  try {
+    await router.push({
+      path: "/sorteringsordningar",
+      query: { saved: "created" },
+    });
   } finally {
     isSubmitting.value = false;
   }
@@ -714,6 +746,48 @@ async function handleSubmit(): Promise<void> {
 
       <SorteringsordningPreview :spec="buildSpec()" />
 
+      <div class="default-row">
+        <div class="default-option">
+          <label class="default-label">
+            <input v-model="isDefault" type="checkbox" />
+            Markera sorteringsordning som default
+          </label>
+          <FTooltip
+            screen-reader-text="Läs mer om default sorteringsordning"
+            header-tag="h2"
+          >
+            <template #header>Default</template>
+            <template #body>
+              <p>
+                Default avser den sorteringsordning som används och styr i
+                vilken ordning operativa uppgifter visas och tilldelas
+                handläggare. Du kan ha flera sorteringsordningar, men endast en
+                sorteringsordning kan vara default åt gången.
+              </p>
+            </template>
+          </FTooltip>
+        </div>
+        <div class="default-option">
+          <label class="default-label">
+            <input v-model="isActive" type="checkbox" />
+            Markera sorteringsordning som aktiv
+          </label>
+          <FTooltip
+            screen-reader-text="Läs mer om aktiv sorteringsordning"
+            header-tag="h2"
+          >
+            <template #header>Aktiv</template>
+            <template #body>
+              <p>
+                Detta är en personlig markering exempelvis för
+                sorteringsordningar som används regelbundet. Flera
+                sorteringsordningar kan vara aktiva samtidigt.
+              </p>
+            </template>
+          </FTooltip>
+        </div>
+      </div>
+
       <div class="form-actions">
         <FButton type="submit" :disabled="isSubmitting">
           {{ isSubmitting ? "Sparar..." : "Spara sorteringsordning" }}
@@ -855,5 +929,26 @@ async function handleSubmit(): Promise<void> {
   display: flex;
   gap: 0.75rem;
   align-items: center;
+}
+
+.default-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.default-option {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.default-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.95rem;
 }
 </style>
