@@ -135,7 +135,7 @@ onMounted(load);
           }"
           default-sort-attribute="namn"
           :default-sort-ascending="true"
-          filter-label="Sök på namn"
+          filter-label="Sök"
           :filter-attributes="['namn']"
         >
           <template #default="{ sortFilterResult }">
