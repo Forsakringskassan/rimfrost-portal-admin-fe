@@ -31,6 +31,10 @@ ska kunna observera och justera uppgiftsprioritering utan direktåtkomst till ba
 - **PAFE-FR-01.4** Om bakomliggande tjänst returnerar färre uppgifter än det totala antalet ska
   gränssnittet varna administratören om att listan är trunkerad.
 - **PAFE-FR-01.5** Rader utan giltig uppgiftsidentifierare ska filtreras bort från visningen.
+- **PAFE-FR-01.6** Administratören ska kunna flytta en uppgift till en angiven handläggare,
+  genom att avtilldela och därefter tilldela uppgiften till den angivna identiteten.
+- **PAFE-FR-01.7** Den angivna målhandläggaren får inte vara densamma som uppgiftens nuvarande
+  handläggare.
 
 ### PAFE-FR-02 — Sorteringsordningar
 
