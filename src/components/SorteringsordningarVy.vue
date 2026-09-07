@@ -12,71 +12,38 @@ import {
 } from "@fkui/vue";
 import { useRoute, useRouter } from "vue-router";
 import type { Sorteringsordning } from "../types";
-import {
-  loadActiveSorteringsordningIds,
-  saveActiveSorteringsordningIds,
-} from "../utils/active-sorteringsordningar";
 import { deleteSorteringsordning } from "../utils/delete-sorteringsordning";
-import { getDefaultSorteringsordning } from "../utils/get-default-sorteringsordning";
+import { getAktivSorteringsordning } from "../utils/get-aktiv-sorteringsordning";
 import { getSorteringsordningar } from "../utils/get-sorteringsordningar";
-import { setDefaultSorteringsordning } from "../utils/set-default-sorteringsordning";
+import { setAktivSorteringsordning } from "../utils/set-aktiv-sorteringsordning";
 
 const route = useRoute();
 const router = useRouter();
 const { confirmModal } = useModal();
 
 const sorteringsordningar = ref<Sorteringsordning[]>([]);
-const defaultId = ref<string | null>(null);
+const aktivId = ref<string | null>(null);
 const isLoading = ref(false);
 const error = ref<string | null>(null);
 const loadFailed = ref(false);
 const successMessage = ref<string | null>(null);
 let successMessageTimeout: ReturnType<typeof setTimeout> | null = null;
 
-function pinDefaultFirst<T extends { id: string }>(rows: T[]): T[] {
-  if (!defaultId.value) {
+function pinAktivFirst<T extends { id: string }>(rows: T[]): T[] {
+  if (!aktivId.value) {
     return rows;
   }
-  const idx = rows.findIndex((row) => row.id === defaultId.value);
+  const idx = rows.findIndex((row) => row.id === aktivId.value);
   if (idx <= 0) {
     return rows;
   }
   const reordered = [...rows];
-  const defaultRow = reordered.splice(idx, 1)[0];
-  if (!defaultRow) {
+  const aktivRow = reordered.splice(idx, 1)[0];
+  if (!aktivRow) {
     return rows;
   }
-  reordered.unshift(defaultRow);
+  reordered.unshift(aktivRow);
   return reordered;
-}
-
-const activeIds = ref<Set<string>>(loadActiveSorteringsordningIds());
-const sortActiveFirst = ref(false);
-
-function sortActiveFirstIfEnabled<T extends { id: string }>(rows: T[]): T[] {
-  if (!sortActiveFirst.value) {
-    return rows;
-  }
-  // eslint-disable-next-line unicorn/no-array-sort -- toSorted() needs ES2023 lib, not enabled in tsconfig.app.json
-  return [...rows].sort((a, b) => {
-    const aActive = activeIds.value.has(a.id);
-    const bActive = activeIds.value.has(b.id);
-    if (aActive === bActive) {
-      return 0;
-    }
-    return aActive ? -1 : 1;
-  });
-}
-
-function toggleActive(id: string): void {
-  const next = new Set(activeIds.value);
-  if (next.has(id)) {
-    next.delete(id);
-  } else {
-    next.add(id);
-  }
-  activeIds.value = next;
-  saveActiveSorteringsordningIds(next);
 }
 
 const sortableSorteringsordningar = computed(() =>
@@ -91,12 +58,12 @@ async function load(): Promise<void> {
   error.value = null;
   loadFailed.value = false;
   try {
-    const [page, defaultSO] = await Promise.all([
+    const [page, aktivSO] = await Promise.all([
       getSorteringsordningar(100),
-      getDefaultSorteringsordning(),
+      getAktivSorteringsordning(),
     ]);
     sorteringsordningar.value = page.items;
-    defaultId.value = defaultSO?.id ?? null;
+    aktivId.value = aktivSO?.id ?? null;
   } catch {
     error.value = "Kunde inte hämta sorteringsordningar.";
     loadFailed.value = true;
@@ -115,22 +82,22 @@ function showSuccessMessage(message: string): void {
   }, 4000);
 }
 
-async function handleSetDefault(id: string): Promise<void> {
+async function handleSetAktiv(id: string): Promise<void> {
   try {
-    const result = await setDefaultSorteringsordning(id);
+    const result = await setAktivSorteringsordning(id);
     if (result === null) {
       error.value = "Sorteringsordningen hittades inte.";
       return;
     }
-    defaultId.value = id;
+    aktivId.value = id;
     const namn = sorteringsordningar.value.find((row) => row.id === id)?.namn;
     if (namn) {
       showSuccessMessage(
-        `"${namn}" är nu satt som default och visas överst i listan.`,
+        `"${namn}" är nu satt som aktiv och visas överst i listan.`,
       );
     }
   } catch {
-    error.value = "Kunde inte sätta default sorteringsordning.";
+    error.value = "Kunde inte markera aktiv sorteringsordning.";
   }
 }
 
@@ -155,14 +122,8 @@ async function handleDelete(id: string): Promise<void> {
     sorteringsordningar.value = sorteringsordningar.value.filter(
       (s) => s.id !== id,
     );
-    if (defaultId.value === id) {
-      defaultId.value = null;
-    }
-    if (activeIds.value.has(id)) {
-      const next = new Set(activeIds.value);
-      next.delete(id);
-      activeIds.value = next;
-      saveActiveSorteringsordningIds(next);
+    if (aktivId.value === id) {
+      aktivId.value = null;
     }
   } catch {
     error.value = "Kunde inte ta bort sorteringsordningen.";
@@ -202,15 +163,6 @@ onUnmounted(() => {
         <h1 id="main-title" class="h1">Sorteringsordningar</h1>
         <p class="body">Hantera sorteringsordningar för operativa uppgifter.</p>
       </div>
-      <button
-        type="button"
-        class="active-first-toggle"
-        :class="{ 'active-first-toggle--on': sortActiveFirst }"
-        :aria-pressed="sortActiveFirst"
-        @click="sortActiveFirst = !sortActiveFirst"
-      >
-        Sortera aktiva överst
-      </button>
     </div>
 
     <FButton
@@ -257,16 +209,17 @@ onUnmounted(() => {
           filter-label="Sök på namn"
           :filter-attributes="['namn']"
         >
-          <template #header>
-            <FButton @click="router.push('/sorteringsordningar/skapa')">
+          <template #header="{ slotClass }">
+            <FButton
+              :class="slotClass"
+              @click="router.push('/sorteringsordningar/skapa')"
+            >
               Skapa ny
             </FButton>
           </template>
           <template #default="{ sortFilterResult }">
             <FInteractiveTable
-              :rows="
-                pinDefaultFirst(sortActiveFirstIfEnabled(sortFilterResult))
-              "
+              :rows="pinAktivFirst(sortFilterResult)"
               key-attribute="id"
             >
               <template #default="{ row }">
@@ -286,59 +239,50 @@ onUnmounted(() => {
                 </FTableColumn>
                 <FTableColumn name="status" title="Status" shrink>
                   <div class="status-cell">
-                    <button
-                      type="button"
-                      class="status-chip"
-                      :class="{ 'status-chip--active': row.id === defaultId }"
-                      :aria-pressed="row.id === defaultId"
-                      :disabled="row.id === defaultId"
-                      :title="
-                        row.id === defaultId
-                          ? 'Detta är redan default'
-                          : 'Ange som default'
-                      "
-                      @click="handleSetDefault(row.id)"
-                    >
-                      Default
-                    </button>
-                    <button
-                      type="button"
-                      class="status-chip"
-                      :class="{
-                        'status-chip--active': activeIds.has(row.id),
-                      }"
-                      :aria-pressed="activeIds.has(row.id)"
-                      title="Markera/avmarkera som aktiv"
-                      @click="toggleActive(row.id)"
-                    >
+                    <span v-if="row.id === aktivId" class="badge badge--aktiv">
                       Aktiv
-                    </button>
+                    </span>
                   </div>
                 </FTableColumn>
-                <FTableColumn name="actions" title="Åtgärder">
-                  <div class="action-cell align-items-center">
-                    <FTableButton
-                      icon="pen"
-                      title="Redigera sorteringsordning"
-                      @click="
-                        router.push(`/sorteringsordningar/${row.id}/redigera`)
-                      "
-                    >
-                      Redigera sorteringsordning
-                    </FTableButton>
-                    <FTableButton
-                      icon="trashcan"
-                      :disabled="row.id === defaultId"
-                      :title="
-                        row.id === defaultId
-                          ? 'En sorteringsordning som är satt till default kan inte tas bort'
-                          : 'Ta bort sorteringsordning'
-                      "
-                      @click="handleDelete(row.id)"
-                    >
-                      Ta bort sorteringsordning
-                    </FTableButton>
-                  </div>
+                <FTableColumn
+                  name="actions"
+                  title="Åtgärder"
+                  type="action"
+                  shrink
+                >
+                  <FTableButton
+                    icon="pen"
+                    title="Redigera sorteringsordning"
+                    @click="
+                      router.push(`/sorteringsordningar/${row.id}/redigera`)
+                    "
+                  >
+                    Redigera sorteringsordning
+                  </FTableButton>
+                  <FTableButton
+                    icon="trashcan"
+                    :disabled="row.id === aktivId"
+                    :title="
+                      row.id === aktivId
+                        ? 'En sorteringsordning som är satt till aktiv kan inte tas bort'
+                        : 'Ta bort sorteringsordning'
+                    "
+                    @click="handleDelete(row.id)"
+                  >
+                    Ta bort sorteringsordning
+                  </FTableButton>
+                  <FTableButton
+                    label
+                    :disabled="row.id === aktivId"
+                    :title="
+                      row.id === aktivId
+                        ? 'Detta är redan den aktiva sorteringsordningen'
+                        : 'Markera som aktiv'
+                    "
+                    @click="handleSetAktiv(row.id)"
+                  >
+                    Ange som aktiv
+                  </FTableButton>
                 </FTableColumn>
               </template>
             </FInteractiveTable>
@@ -350,12 +294,6 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-.align-items-center {
-  display: flex;
-  margin-top: 3px;
-  align-items: center;
-}
-
 .sorteringsordningar-vy {
   padding: 1.5rem 2rem;
 }
@@ -364,26 +302,24 @@ onUnmounted(() => {
   margin-top: 1rem;
 }
 
+/* FKUI's own margins here are asymmetric - the button has 0.25rem top and
+   1.5rem bottom - and align-self centres the margin box, so the contents
+   end up 4px apart. Equal top and bottom margins make the centres
+   coincide. Below 640px the controls stack and keep FKUI defaults. */
+@media (min-width: 640px) {
+  .table-section :deep(.sort-filter-dataset__toolbar__header),
+  .table-section :deep(.text-field--inline),
+  .table-section :deep(.select-field--inline) {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+}
+
 .title-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
-}
-
-.action-cell {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  white-space: nowrap;
-}
-
-.action-cell :deep(.table__button) {
-  color: inherit;
-}
-
-:deep(.table) {
-  margin-top: 1rem;
 }
 
 /* Nudge Namn (1st column), Skapad (2nd column), Regler (3rd column)
@@ -411,52 +347,21 @@ onUnmounted(() => {
 .status-cell {
   display: flex;
   flex-direction: row;
-  gap: 0.375rem;
+  align-items: center;
+}
+
+.badge--aktiv {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background-color: #d4edda;
+  color: #155724;
 }
 
 .nowrap-cell {
   white-space: nowrap;
-}
-
-.status-chip {
-  display: inline-block;
-  padding: 0.125rem 0.625rem;
-  border-radius: 0.75rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  border: 1px solid var(--color-border, #ced4da);
-  background-color: transparent;
-  color: var(--color-grey-600, #6c757d);
-  cursor: pointer;
-}
-
-.status-chip--active {
-  border-color: #b6dfc4;
-  background-color: #d4edda;
-  color: #155724;
-}
-
-.status-chip:disabled {
-  cursor: not-allowed;
-}
-
-.active-first-toggle {
-  margin-right: 38px;
-  display: inline-block;
-  padding: 0.375rem 0.875rem;
-  border-radius: 0.75rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  border: 1px solid var(--color-border, #ced4da);
-  background-color: transparent;
-  color: var(--color-grey-600, #6c757d);
-  cursor: pointer;
-}
-
-.active-first-toggle--on {
-  border-color: #b6dfc4;
-  background-color: #d4edda;
-  color: #155724;
 }
 
 .error-message {

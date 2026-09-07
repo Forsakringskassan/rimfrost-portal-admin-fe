@@ -11,13 +11,9 @@ import {
 } from "@fkui/vue";
 import { onBeforeRouteLeave, useRoute, useRouter } from "vue-router";
 import type { Constraint, SortBy, SorteringsordningEntry } from "../types";
-import {
-  loadActiveSorteringsordningIds,
-  saveActiveSorteringsordningIds,
-} from "../utils/active-sorteringsordningar";
-import { getDefaultSorteringsordning } from "../utils/get-default-sorteringsordning";
+import { getAktivSorteringsordning } from "../utils/get-aktiv-sorteringsordning";
 import { getSorteringsordning } from "../utils/get-sorteringsordning";
-import { setDefaultSorteringsordning } from "../utils/set-default-sorteringsordning";
+import { setAktivSorteringsordning } from "../utils/set-aktiv-sorteringsordning";
 import { updateSorteringsordning } from "../utils/update-sorteringsordning";
 import SorteringsordningPreview from "./SorteringsordningPreview.vue";
 
@@ -186,9 +182,7 @@ const id = route.params.id as string;
 
 const namn = ref("");
 const entries = ref<FormEntry[]>([newEntry()]);
-const isDefault = ref(false);
-const isActive = ref(false);
-let originalIsActive = false;
+const isAktiv = ref(false);
 const isLoading = ref(false);
 const isSubmitting = ref(false);
 const isRemoving = ref(false);
@@ -201,7 +195,7 @@ const hasUnsavedChanges = computed(
     JSON.stringify({
       namn: namn.value,
       entries: entries.value,
-      isDefault: isDefault.value,
+      isAktiv: isAktiv.value,
     }) !== pristineSnapshot,
 );
 let justSaved = false;
@@ -237,9 +231,9 @@ async function load(): Promise<void> {
   isLoading.value = true;
   error.value = null;
   try {
-    const [sorteringsordning, defaultSO] = await Promise.all([
+    const [sorteringsordning, aktivSO] = await Promise.all([
       getSorteringsordning(id),
-      getDefaultSorteringsordning(),
+      getAktivSorteringsordning(),
     ]);
     if (sorteringsordning === null) {
       error.value = "Sorteringsordningen hittades inte.";
@@ -252,13 +246,11 @@ async function load(): Promise<void> {
       sorteringsordning.entries.length > 0
         ? sorteringsordning.entries.map(entryToForm)
         : [newEntry()];
-    isDefault.value = defaultSO?.id === id;
-    isActive.value = loadActiveSorteringsordningIds().has(id);
-    originalIsActive = isActive.value;
+    isAktiv.value = aktivSO?.id === id;
     pristineSnapshot = JSON.stringify({
       namn: namn.value,
       entries: entries.value,
-      isDefault: isDefault.value,
+      isAktiv: isAktiv.value,
     });
   } catch {
     error.value = "Kunde inte hämta sorteringsordningen.";
@@ -269,29 +261,6 @@ async function load(): Promise<void> {
 
 function addEntry(): void {
   entries.value.push(newEntry());
-}
-
-function toggleActiveCheckbox(): void {
-  const ids = loadActiveSorteringsordningIds();
-  if (isActive.value) {
-    ids.add(id);
-  } else {
-    ids.delete(id);
-  }
-  saveActiveSorteringsordningIds(ids);
-}
-
-function handleCancel(): void {
-  if (isActive.value !== originalIsActive) {
-    const ids = loadActiveSorteringsordningIds();
-    if (originalIsActive) {
-      ids.add(id);
-    } else {
-      ids.delete(id);
-    }
-    saveActiveSorteringsordningIds(ids);
-  }
-  router.push("/sorteringsordningar");
 }
 
 async function removeEntry(index: number): Promise<void> {
@@ -427,11 +396,11 @@ async function handleSubmit(): Promise<void> {
     return;
   }
 
-  if (isDefault.value) {
+  if (isAktiv.value) {
     try {
-      await setDefaultSorteringsordning(id);
+      await setAktivSorteringsordning(id);
     } catch {
-      // The sorteringsordning was saved, but couldn't be set as default —
+      // The sorteringsordning was saved, but couldn't be set as aktiv —
       // don't block navigation.
     }
   }
@@ -818,34 +787,10 @@ onMounted(load);
 
         <SorteringsordningPreview :spec="buildSpec()" />
 
-        <div class="default-row">
-          <div class="default-option">
-            <label class="default-label">
-              <input v-model="isDefault" type="checkbox" />
-              Markera sorteringsordning som default
-            </label>
-            <FTooltip
-              screen-reader-text="Läs mer om default sorteringsordning"
-              header-tag="h2"
-            >
-              <template #header>Default</template>
-              <template #body>
-                <p>
-                  Default avser den sorteringsordning som används och styr i
-                  vilken ordning operativa uppgifter visas och tilldelas
-                  handläggare. Du kan ha flera sorteringsordningar, men endast
-                  en sorteringsordning kan vara default åt gången.
-                </p>
-              </template>
-            </FTooltip>
-          </div>
-          <div class="default-option">
-            <label class="default-label">
-              <input
-                v-model="isActive"
-                type="checkbox"
-                @change="toggleActiveCheckbox"
-              />
+        <div class="aktiv-row">
+          <div class="aktiv-option">
+            <label class="aktiv-label">
+              <input v-model="isAktiv" type="checkbox" :disabled="isAktiv" />
               Markera sorteringsordning som aktiv
             </label>
             <FTooltip
@@ -855,9 +800,11 @@ onMounted(load);
               <template #header>Aktiv</template>
               <template #body>
                 <p>
-                  Detta är en personlig markering exempelvis för
-                  sorteringsordningar som används regelbundet. Flera
-                  sorteringsordningar kan vara aktiva samtidigt.
+                  Aktiv avser den sorteringsordning som används och styr i
+                  vilken ordning operativa uppgifter visas och tilldelas
+                  handläggare. Du kan ha flera sorteringsordningar, men endast
+                  en kan vara aktiv åt gången — markeringen tas inte bort, den
+                  flyttas när du markerar en annan.
                 </p>
               </template>
             </FTooltip>
@@ -868,7 +815,11 @@ onMounted(load);
           <FButton type="submit" :disabled="isSubmitting">
             {{ isSubmitting ? "Sparar..." : "Spara ändringar" }}
           </FButton>
-          <FButton type="button" variant="secondary" @click="handleCancel">
+          <FButton
+            type="button"
+            variant="secondary"
+            @click="router.push('/sorteringsordningar')"
+          >
             Avbryt
           </FButton>
         </div>
@@ -980,20 +931,20 @@ onMounted(load);
   margin-bottom: 1.5rem;
 }
 
-.default-row {
+.aktiv-row {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   margin-bottom: 1.5rem;
 }
 
-.default-option {
+.aktiv-option {
   display: flex;
   align-items: center;
   gap: 0.375rem;
 }
 
-.default-label {
+.aktiv-label {
   display: flex;
   align-items: center;
   gap: 0.5rem;

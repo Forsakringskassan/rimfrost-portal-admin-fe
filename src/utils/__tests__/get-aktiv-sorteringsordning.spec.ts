@@ -1,8 +1,8 @@
 /* eslint-disable camelcase -- Allows snake case from BE */
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getDefaultSorteringsordning } from "../get-default-sorteringsordning";
+import { getAktivSorteringsordning } from "../get-aktiv-sorteringsordning";
 
-const mockDefault = {
+const mockAktiv = {
   id: "f47ac10b-0001-0001-0001-000000000001",
   skapad: "2026-06-01T10:00:00Z",
   entries: [
@@ -24,28 +24,28 @@ function mockFetch(data: unknown, status: number) {
   );
 }
 
-describe("getDefaultSorteringsordning", () => {
+describe("getAktivSorteringsordning", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
   });
 
-  it("returns the default sorteringsordning on success", async () => {
-    mockFetch(mockDefault, 200);
-    const result = await getDefaultSorteringsordning();
+  it("returns the aktiv sorteringsordning on success", async () => {
+    mockFetch(mockAktiv, 200);
+    const result = await getAktivSorteringsordning();
     expect(result).not.toBeNull();
     expect(result?.id).toBe("f47ac10b-0001-0001-0001-000000000001");
     expect(result?.entries[0].sort_by?.field).toBe("skapad");
   });
 
-  it("returns null when no default is configured (404)", async () => {
+  it("returns null when no aktiv is configured (404)", async () => {
     mockFetch(null, 404);
-    const result = await getDefaultSorteringsordning();
+    const result = await getAktivSorteringsordning();
     expect(result).toBeNull();
   });
 
   it("throws on other HTTP errors", async () => {
     mockFetch({}, 500);
-    await expect(getDefaultSorteringsordning()).rejects.toThrow("HTTP 500");
+    await expect(getAktivSorteringsordning()).rejects.toThrow("HTTP 500");
   });
 
   it("throws on network failure", async () => {
@@ -53,6 +53,6 @@ describe("getDefaultSorteringsordning", () => {
       "fetch",
       vi.fn().mockRejectedValue(new TypeError("Failed to fetch")),
     );
-    await expect(getDefaultSorteringsordning()).rejects.toThrow();
+    await expect(getAktivSorteringsordning()).rejects.toThrow();
   });
 });

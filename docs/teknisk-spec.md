@@ -10,7 +10,7 @@ All data hämtas via `fetch` mot en enda BFF, ingen websocket/polling.
 
 ```text
 src/
-├── router/            # Ruttdefinitioner: /operativa-uppgifter, /statistik, /konfiguration(/...)
+├── router/            # Ruttdefinitioner: /operativa-uppgifter, /konfiguration(/...)
 ├── components/         # AdminSektioner (vänsternavigering), SorteringsordningPreview m.fl.
 ├── stores/            # Pinia: oul-store (uppgiftslista), sorteringsordning-relaterat state
 ├── utils/             # fetch-wrappers mot BFF
@@ -21,18 +21,18 @@ src/
 
 Ingen extern OpenAPI-specifikation — kontraktet definieras av Portal Admin BFF.
 
-| Metod  | Sökväg                                  | Beskrivning                           |
-| ------ | --------------------------------------- | ------------------------------------- |
-| GET    | `/admin/tasks`                          | Samtliga operativa uppgifter          |
-| POST   | `/admin/tasks/{uppgiftId}/unassign`     | Ta bort tilldelning av uppgift        |
-| GET    | `/admin/sorteringsordning`              | Lista sorteringsordningar (paginerad) |
-| GET    | `/admin/sorteringsordning/{id}`         | Hämta en sorteringsordning            |
-| GET    | `/admin/sorteringsordning/default`      | Hämta standardsorteringsordning       |
-| POST   | `/admin/sorteringsordning`              | Skapa sorteringsordning               |
-| PUT    | `/admin/sorteringsordning/{id}`         | Uppdatera sorteringsordning           |
-| DELETE | `/admin/sorteringsordning/{id}`         | Ta bort sorteringsordning             |
-| PUT    | `/admin/sorteringsordning/{id}/default` | Sätt som standard                     |
-| POST   | `/admin/sorteringsordning/preview`      | Förhandsgranska matchande uppgifter   |
+| Metod  | Sökväg                                | Beskrivning                           |
+| ------ | ------------------------------------- | ------------------------------------- |
+| GET    | `/admin/tasks`                        | Samtliga operativa uppgifter          |
+| POST   | `/admin/tasks/{uppgiftId}/unassign`   | Ta bort tilldelning av uppgift        |
+| GET    | `/admin/sorteringsordning`            | Lista sorteringsordningar (paginerad) |
+| GET    | `/admin/sorteringsordning/{id}`       | Hämta en sorteringsordning            |
+| GET    | `/admin/sorteringsordning/aktiv`      | Hämta aktiv sorteringsordning         |
+| POST   | `/admin/sorteringsordning`            | Skapa sorteringsordning               |
+| PUT    | `/admin/sorteringsordning/{id}`       | Uppdatera sorteringsordning           |
+| DELETE | `/admin/sorteringsordning/{id}`       | Ta bort sorteringsordning             |
+| PUT    | `/admin/sorteringsordning/{id}/aktiv` | Markera som aktiv                     |
+| POST   | `/admin/sorteringsordning/preview`    | Förhandsgranska matchande uppgifter   |
 
 ## Kafka-integration
 

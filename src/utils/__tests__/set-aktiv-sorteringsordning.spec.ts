@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { setDefaultSorteringsordning } from "../set-default-sorteringsordning";
+import { setAktivSorteringsordning } from "../set-aktiv-sorteringsordning";
 
 function mockFetch(status: number) {
   vi.stubGlobal(
@@ -11,14 +11,14 @@ function mockFetch(status: number) {
   );
 }
 
-describe("setDefaultSorteringsordning", () => {
+describe("setAktivSorteringsordning", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
   });
 
   it("resolves without a value on success (204)", async () => {
     mockFetch(204);
-    const result = await setDefaultSorteringsordning("some-id");
+    const result = await setAktivSorteringsordning("some-id");
     expect(result).toBeUndefined();
   });
 
@@ -26,11 +26,11 @@ describe("setDefaultSorteringsordning", () => {
     const fetchSpy = vi.fn().mockResolvedValue({ ok: true, status: 204 });
     vi.stubGlobal("fetch", fetchSpy);
 
-    await setDefaultSorteringsordning("f47ac10b-0001-0001-0001-000000000001");
+    await setAktivSorteringsordning("f47ac10b-0001-0001-0001-000000000001");
 
     expect(fetchSpy).toHaveBeenCalledWith(
       expect.stringContaining(
-        "/admin/sorteringsordning/f47ac10b-0001-0001-0001-000000000001/default",
+        "/admin/sorteringsordning/f47ac10b-0001-0001-0001-000000000001/aktiv",
       ),
       expect.objectContaining({ method: "PUT" }),
     );
@@ -38,13 +38,13 @@ describe("setDefaultSorteringsordning", () => {
 
   it("returns null when not found (404)", async () => {
     mockFetch(404);
-    const result = await setDefaultSorteringsordning("does-not-exist");
+    const result = await setAktivSorteringsordning("does-not-exist");
     expect(result).toBeNull();
   });
 
   it("throws on other HTTP errors", async () => {
     mockFetch(500);
-    await expect(setDefaultSorteringsordning("some-id")).rejects.toThrow(
+    await expect(setAktivSorteringsordning("some-id")).rejects.toThrow(
       "HTTP 500",
     );
   });
@@ -54,6 +54,6 @@ describe("setDefaultSorteringsordning", () => {
       "fetch",
       vi.fn().mockRejectedValue(new TypeError("Failed to fetch")),
     );
-    await expect(setDefaultSorteringsordning("some-id")).rejects.toThrow();
+    await expect(setAktivSorteringsordning("some-id")).rejects.toThrow();
   });
 });

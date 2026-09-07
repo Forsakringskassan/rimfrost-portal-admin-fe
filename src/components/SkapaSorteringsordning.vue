@@ -11,12 +11,8 @@ import {
 } from "@fkui/vue";
 import { onBeforeRouteLeave, useRouter } from "vue-router";
 import type { Constraint, SortBy, SorteringsordningEntry } from "../types";
-import {
-  loadActiveSorteringsordningIds,
-  saveActiveSorteringsordningIds,
-} from "../utils/active-sorteringsordningar";
 import { createSorteringsordning } from "../utils/create-sorteringsordning";
-import { setDefaultSorteringsordning } from "../utils/set-default-sorteringsordning";
+import { setAktivSorteringsordning } from "../utils/set-aktiv-sorteringsordning";
 import SorteringsordningPreview from "./SorteringsordningPreview.vue";
 
 const DATE_FIELDS = new Set(["skapad", "planerad_till"]);
@@ -157,8 +153,7 @@ function newEntry(): FormEntry {
 
 const namn = ref("");
 const entries = ref<FormEntry[]>([newEntry()]);
-const isDefault = ref(false);
-const isActive = ref(false);
+const isAktiv = ref(false);
 const isSubmitting = ref(false);
 const isRemoving = ref(false);
 const error = ref<string | null>(null);
@@ -341,17 +336,11 @@ async function handleSubmit(): Promise<void> {
     return;
   }
 
-  if (isActive.value) {
-    const ids = loadActiveSorteringsordningIds();
-    ids.add(created.id);
-    saveActiveSorteringsordningIds(ids);
-  }
-
-  if (isDefault.value) {
+  if (isAktiv.value) {
     try {
-      await setDefaultSorteringsordning(created.id);
+      await setAktivSorteringsordning(created.id);
     } catch {
-      // The sorteringsordning was created, but couldn't be set as default —
+      // The sorteringsordning was created, but couldn't be set as aktiv —
       // don't block navigation or risk a duplicate on retry.
     }
   }
@@ -746,30 +735,10 @@ async function handleSubmit(): Promise<void> {
 
       <SorteringsordningPreview :spec="buildSpec()" />
 
-      <div class="default-row">
-        <div class="default-option">
-          <label class="default-label">
-            <input v-model="isDefault" type="checkbox" />
-            Markera sorteringsordning som default
-          </label>
-          <FTooltip
-            screen-reader-text="Läs mer om default sorteringsordning"
-            header-tag="h2"
-          >
-            <template #header>Default</template>
-            <template #body>
-              <p>
-                Default avser den sorteringsordning som används och styr i
-                vilken ordning operativa uppgifter visas och tilldelas
-                handläggare. Du kan ha flera sorteringsordningar, men endast en
-                sorteringsordning kan vara default åt gången.
-              </p>
-            </template>
-          </FTooltip>
-        </div>
-        <div class="default-option">
-          <label class="default-label">
-            <input v-model="isActive" type="checkbox" />
+      <div class="aktiv-row">
+        <div class="aktiv-option">
+          <label class="aktiv-label">
+            <input v-model="isAktiv" type="checkbox" />
             Markera sorteringsordning som aktiv
           </label>
           <FTooltip
@@ -779,9 +748,11 @@ async function handleSubmit(): Promise<void> {
             <template #header>Aktiv</template>
             <template #body>
               <p>
-                Detta är en personlig markering exempelvis för
-                sorteringsordningar som används regelbundet. Flera
-                sorteringsordningar kan vara aktiva samtidigt.
+                Aktiv avser den sorteringsordning som används och styr i vilken
+                ordning operativa uppgifter visas och tilldelas handläggare. Du
+                kan ha flera sorteringsordningar, men endast en kan vara aktiv
+                åt gången — markeringen tas inte bort, den flyttas när du
+                markerar en annan.
               </p>
             </template>
           </FTooltip>
@@ -931,20 +902,20 @@ async function handleSubmit(): Promise<void> {
   align-items: center;
 }
 
-.default-row {
+.aktiv-row {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   margin-bottom: 1.5rem;
 }
 
-.default-option {
+.aktiv-option {
   display: flex;
   align-items: center;
   gap: 0.375rem;
 }
 
-.default-label {
+.aktiv-label {
   display: flex;
   align-items: center;
   gap: 0.5rem;
