@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
-import { FFormModal, FTextField } from "@fkui/vue";
-import type { HandlaggarId } from "../types";
+import { computed, onMounted, ref } from "vue";
+import { FFormModal, FSelectField } from "@fkui/vue";
+import type { HandlaggarId, Handlaggare } from "../types";
+import { getHandlaggare, handlaggareKey } from "../utils/get-handlaggare";
 
 const props = defineProps<{
   currentHandlaggarId: HandlaggarId | null;
@@ -12,23 +13,29 @@ const emit = defineEmits<{
   cancel: [];
 }>();
 
-const value = ref({
-  typId: "",
-  varde: "",
+const handlaggareLista = ref<Handlaggare[]>([]);
+const isLoading = ref(true);
+const loadError = ref<string | null>(null);
+
+const value = ref({ handlaggareKey: "" });
+
+const selectedHandlaggarId = computed<HandlaggarId | null>(() => {
+  const found = handlaggareLista.value.find(
+    (h) => handlaggareKey(h.handlaggarId) === value.value.handlaggareKey,
+  );
+  return found?.handlaggarId ?? null;
 });
 
 const isSameAsCurrent = computed(
   () =>
     !!props.currentHandlaggarId &&
-    value.value.typId === props.currentHandlaggarId.typId &&
-    value.value.varde === props.currentHandlaggarId.varde,
+    !!selectedHandlaggarId.value &&
+    selectedHandlaggarId.value.typId === props.currentHandlaggarId.typId &&
+    selectedHandlaggarId.value.varde === props.currentHandlaggarId.varde,
 );
 
 const canSubmit = computed(
-  () =>
-    value.value.typId.trim() !== "" &&
-    value.value.varde.trim() !== "" &&
-    !isSameAsCurrent.value,
+  () => !!selectedHandlaggarId.value && !isSameAsCurrent.value,
 );
 
 const buttons = computed(() => [
@@ -48,23 +55,45 @@ const buttons = computed(() => [
 ]);
 
 function onSubmit() {
-  if (!canSubmit.value) {
+  if (!selectedHandlaggarId.value || !canSubmit.value) {
     return;
   }
-  emit("confirm", { typId: value.value.typId, varde: value.value.varde });
+  emit("confirm", selectedHandlaggarId.value);
 }
+
+function handlaggareLabel(h: Handlaggare): string {
+  return `${h.fornamn} ${h.efternamn}`;
+}
+
+onMounted(async () => {
+  try {
+    handlaggareLista.value = await getHandlaggare();
+  } catch {
+    loadError.value = "Kunde inte hämta handläggarlistan. Försök igen senare.";
+  } finally {
+    isLoading.value = false;
+  }
+});
 </script>
 
 <template>
   <f-form-modal :value :buttons @submit="onSubmit" @cancel="emit('cancel')">
     <template #header>Flytta uppgift till annan handläggare</template>
     <template #input-text-fields>
-      <p class="body">
-        Ange målhandläggarens identitet. Tillfällig lösning i väntan på en
-        riktig handläggarkatalog.
-      </p>
-      <f-text-field v-model="value.typId">Typ-ID</f-text-field>
-      <f-text-field v-model="value.varde">Värde</f-text-field>
+      <p v-if="loadError" class="error-message">{{ loadError }}</p>
+      <FSelectField v-else v-model="value.handlaggareKey" :disabled="isLoading">
+        <template #label>Handläggare</template>
+        <option value="" disabled>
+          {{ isLoading ? "Hämtar handläggare..." : "Välj handläggare" }}
+        </option>
+        <option
+          v-for="h in handlaggareLista"
+          :key="handlaggareKey(h.handlaggarId)"
+          :value="handlaggareKey(h.handlaggarId)"
+        >
+          {{ handlaggareLabel(h) }}
+        </option>
+      </FSelectField>
       <p v-if="isSameAsCurrent" class="error-message">
         Målhandläggaren kan inte vara densamma som uppgiftens nuvarande
         handläggare.

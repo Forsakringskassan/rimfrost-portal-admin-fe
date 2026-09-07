@@ -9,7 +9,8 @@ import {
   FTableColumn,
 } from "@fkui/vue";
 import { useOulStore } from "../stores/oul-store";
-import type { HandlaggarId, OperativUppgiftItem } from "../types";
+import type { HandlaggarId, Handlaggare, OperativUppgiftItem } from "../types";
+import { getHandlaggare, handlaggareKey } from "../utils/get-handlaggare";
 import { getOulUppgifter } from "../utils/get-oul-uppgifter";
 import { unassignUppgift } from "../utils/unassign-uppgift";
 import { SidBlockedError, updateUppgift } from "../utils/update-uppgift";
@@ -21,6 +22,7 @@ const unassigningIds = ref(new Set<string>());
 const unassignError = ref<string | null>(null);
 const moveError = ref<string | null>(null);
 const movingUppgiftId = ref<string | null>(null);
+const handlaggareLista = ref<Handlaggare[]>([]);
 
 async function handleUnassign(row: OperativUppgiftItem): Promise<void> {
   unassignError.value = null;
@@ -80,7 +82,13 @@ function handlaggareLabel(item: OperativUppgiftItem): string {
   if (!item.handlaggarId) {
     return "—";
   }
-  return item.handlaggarId.varde;
+  const key = handlaggareKey(item.handlaggarId);
+  const match = handlaggareLista.value.find(
+    (h) => handlaggareKey(h.handlaggarId) === key,
+  );
+  return match
+    ? `${match.fornamn} ${match.efternamn}`
+    : item.handlaggarId.varde;
 }
 
 function onSortChange(sortState: SortOrder) {
@@ -105,6 +113,11 @@ onMounted(async () => {
     } catch {
       // error already set in store
     }
+  }
+  try {
+    handlaggareLista.value = await getHandlaggare();
+  } catch {
+    // handläggarnamn faller tillbaka på identitetsvärdet, se handlaggareLabel
   }
 });
 </script>
@@ -188,7 +201,11 @@ onMounted(async () => {
                 {{ row.handlaggarLabel }}
               </FTableColumn>
               <FTableColumn name="actions" title="" shrink>
-                <FTableButton label @click="handleStartMove(row)">
+                <FTableButton
+                  v-if="row.handlaggarId"
+                  label
+                  @click="handleStartMove(row)"
+                >
                   Flytta till handläggare
                 </FTableButton>
                 <FTableButton
