@@ -8,7 +8,6 @@ const route = useRoute();
 
 const sektioner = [
   { label: "Operativa uppgifter", route: "operativa-uppgifter" },
-  { label: "Statistik", route: "statistik" },
   { label: "Sorteringsordningar", route: "sorteringsordningar" },
 ];
 

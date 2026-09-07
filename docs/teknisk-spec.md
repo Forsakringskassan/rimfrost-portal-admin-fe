@@ -53,7 +53,6 @@ Ingen egen hälsokontroll — statisk frontend, hälsa avgörs av webbservern so
 
 | Begränsning                                                                                                     | Föreslagen åtgärd                                       |
 | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| Statistikvyn är en oimplementerad platshållare                                                                  | Implementera eller ta bort menyalternativet             |
 | Ingen UI-väg finns för att tilldela en uppgift till en specifik handläggare, endast för att ta bort tilldelning | Klargör om detta är avsiktligt eller en saknad funktion |
 | Ingen paginering för uppgiftslistan; endast en varningsbanner vid trunkering                                    | Inför paginering eller "visa fler"                      |
 | Fält- och sorteringslistor för villkorsbyggaren är duplicerade mellan skapa- och redigera-vyn                   | Bryt ut till en delad modul                             |
