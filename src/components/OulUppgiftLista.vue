@@ -9,14 +9,18 @@ import {
   FTableColumn,
 } from "@fkui/vue";
 import { useOulStore } from "../stores/oul-store";
-import type { OperativUppgiftItem } from "../types";
+import type { HandlaggarId, OperativUppgiftItem } from "../types";
 import { getOulUppgifter } from "../utils/get-oul-uppgifter";
 import { unassignUppgift } from "../utils/unassign-uppgift";
+import { SidBlockedError, updateUppgift } from "../utils/update-uppgift";
+import FlyttaHandlaggareModal from "./FlyttaHandlaggareModal.vue";
 
 const store = useOulStore();
 
 const unassigningIds = ref(new Set<string>());
 const unassignError = ref<string | null>(null);
+const moveError = ref<string | null>(null);
+const movingUppgiftId = ref<string | null>(null);
 
 async function handleUnassign(row: OperativUppgiftItem): Promise<void> {
   unassignError.value = null;
@@ -30,6 +34,35 @@ async function handleUnassign(row: OperativUppgiftItem): Promise<void> {
     unassignError.value = `Kunde inte lägga tillbaka uppgift ${row.uppgiftId.slice(-8)}.`;
   } finally {
     unassigningIds.value.delete(row.uppgiftId);
+  }
+}
+
+function handleStartMove(row: OperativUppgiftItem): void {
+  moveError.value = null;
+  movingUppgiftId.value = row.uppgiftId;
+}
+
+function handleCancelMove(): void {
+  movingUppgiftId.value = null;
+}
+
+async function handleConfirmMove(handlaggarId: HandlaggarId): Promise<void> {
+  const uppgiftId = movingUppgiftId.value;
+  if (!uppgiftId) {
+    return;
+  }
+  movingUppgiftId.value = null;
+  moveError.value = null;
+  try {
+    const updated = await updateUppgift(uppgiftId, { handlaggarId });
+    if (updated) {
+      store.updateUppgift(updated);
+    }
+  } catch (err) {
+    moveError.value =
+      err instanceof SidBlockedError
+        ? err.message
+        : `Kunde inte flytta uppgift ${uppgiftId.slice(-8)}.`;
   }
 }
 
@@ -61,6 +94,10 @@ const sortableUppgiftLista = computed(() =>
   })),
 );
 
+const movingUppgift = computed(() =>
+  store.uppgiftLista.find((item) => item.uppgiftId === movingUppgiftId.value),
+);
+
 onMounted(async () => {
   if (!store.hasFetched) {
     try {
@@ -86,6 +123,14 @@ onMounted(async () => {
 
     <p v-if="store.error" class="error-message">{{ store.error }}</p>
     <p v-if="unassignError" class="error-message">{{ unassignError }}</p>
+    <p v-if="moveError" class="error-message">{{ moveError }}</p>
+
+    <FlyttaHandlaggareModal
+      v-if="movingUppgiftId"
+      :current-handlaggar-id="movingUppgift?.handlaggarId ?? null"
+      @confirm="handleConfirmMove"
+      @cancel="handleCancelMove"
+    />
 
     <template v-if="!store.isLoading && !store.error && store.hasFetched">
       <p v-if="store.uppgiftLista.length === 0" class="body">
@@ -143,6 +188,9 @@ onMounted(async () => {
                 {{ row.handlaggarLabel }}
               </FTableColumn>
               <FTableColumn name="actions" title="" shrink>
+                <FTableButton label @click="handleStartMove(row)">
+                  Flytta till handläggare
+                </FTableButton>
                 <FTableButton
                   v-if="row.handlaggarId"
                   label

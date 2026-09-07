@@ -31,10 +31,16 @@ ska kunna observera och justera uppgiftsprioritering utan direktåtkomst till ba
 - **PAFE-FR-01.4** Om bakomliggande tjänst returnerar färre uppgifter än det totala antalet ska
   gränssnittet varna administratören om att listan är trunkerad.
 - **PAFE-FR-01.5** Rader utan giltig uppgiftsidentifierare ska filtreras bort från visningen.
-- **PAFE-FR-01.6** Administratören ska kunna flytta en uppgift till en angiven handläggare,
-  genom att avtilldela och därefter tilldela uppgiften till den angivna identiteten.
+- **PAFE-FR-01.6** Administratören ska kunna flytta en uppgift till en angiven handläggare via
+  ett enda anrop som sätter uppgiftens handläggare direkt till den angivna identiteten — inte
+  en föregående avtilldelning följt av en separat tilldelning, eftersom det andra anropet i en
+  sådan tvåstegskedja skulle kunna nekas (se PAFE-FR-01.8) och lämna uppgiften i ett trasigt
+  mellanläge.
 - **PAFE-FR-01.7** Den angivna målhandläggaren får inte vara densamma som uppgiftens nuvarande
   handläggare.
+- **PAFE-FR-01.8** Om bakomliggande tjänst nekar flytten eftersom uppgiften är SID-märkt och
+  angiven handläggare saknar SID-behörighet (HTTP 403) ska ett tydligt, specifikt felmeddelande
+  visas, skilt från ett generellt fel, och uppgiften kvarstår synligt oförändrad i listan.
 
 ### PAFE-FR-02 — Sorteringsordningar
 
