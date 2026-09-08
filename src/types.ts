@@ -49,6 +49,12 @@ export interface HandlaggarId {
   varde: string;
 }
 
+export interface Handlaggare {
+  handlaggarId: HandlaggarId;
+  fornamn: string;
+  efternamn: string;
+}
+
 export interface OperativUppgiftItem {
   uppgiftId: string;
   handlaggningId: string;

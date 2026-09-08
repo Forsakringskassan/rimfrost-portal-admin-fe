@@ -1,6 +1,15 @@
 import { env } from "../config/env";
 import type { OperativUppgiftItem, UpdateUppgiftRequest } from "../types";
 
+export class SidBlockedError extends Error {
+  public constructor() {
+    super(
+      "Uppgiften är SID-märkt och angiven handläggare saknar SID-behörighet — flytten kan inte genomföras.",
+    );
+    this.name = "SidBlockedError";
+  }
+}
+
 export async function updateUppgift(
   uppgiftId: string,
   request: UpdateUppgiftRequest,
@@ -16,6 +25,10 @@ export async function updateUppgift(
 
   if (response.status === 404) {
     return null;
+  }
+
+  if (response.status === 403) {
+    throw new SidBlockedError();
   }
 
   if (!response.ok) {

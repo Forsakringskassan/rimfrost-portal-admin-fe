@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { UpdateUppgiftRequest } from "../../types";
-import { updateUppgift } from "../update-uppgift";
+import { SidBlockedError, updateUppgift } from "../update-uppgift";
 
 const mockRequest: UpdateUppgiftRequest = {
   handlaggarId: { typId: "kortnummer", varde: "12345" },
@@ -70,6 +70,13 @@ describe("updateUppgift", () => {
     mockFetch(null, 404);
     const result = await updateUppgift("does-not-exist", mockRequest);
     expect(result).toBeNull();
+  });
+
+  it("throws SidBlockedError when the SID-behörighet check rejects the move (403)", async () => {
+    mockFetch({}, 403);
+    await expect(updateUppgift("test-001", mockRequest)).rejects.toThrow(
+      SidBlockedError,
+    );
   });
 
   it("throws on other HTTP errors", async () => {
