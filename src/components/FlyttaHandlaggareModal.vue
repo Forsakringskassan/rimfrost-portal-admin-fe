@@ -38,13 +38,14 @@ const canSubmit = computed(
   () => !!selectedHandlaggarId.value && !isSameAsCurrent.value,
 );
 
+const noSelectionError = ref(false);
+
 const buttons = computed(() => [
   {
     label: "Flytta",
     event: "submit",
     type: "primary" as const,
     submitButton: true,
-    disabled: !canSubmit.value,
   },
   {
     label: "Avbryt",
@@ -55,7 +56,11 @@ const buttons = computed(() => [
 ]);
 
 function onSubmit() {
-  if (!selectedHandlaggarId.value || !canSubmit.value) {
+  if (!selectedHandlaggarId.value) {
+    noSelectionError.value = true;
+    return;
+  }
+  if (!canSubmit.value) {
     return;
   }
   emit("confirm", selectedHandlaggarId.value);
@@ -97,6 +102,9 @@ onMounted(async () => {
       <p v-if="isSameAsCurrent" class="error-message">
         Målhandläggaren kan inte vara densamma som uppgiftens nuvarande
         handläggare.
+      </p>
+      <p v-if="noSelectionError && !selectedHandlaggarId" class="error-message">
+        Välj en handläggare innan du flyttar.
       </p>
     </template>
   </f-form-modal>
