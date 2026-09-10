@@ -27,6 +27,7 @@ const isLoading = ref(false);
 const error = ref<string | null>(null);
 const loadFailed = ref(false);
 const successMessage = ref<string | null>(null);
+const messageType = ref<"success" | "warning">("success");
 let successMessageTimeout: ReturnType<typeof setTimeout> | null = null;
 
 function pinAktivFirst<T extends { id: string }>(rows: T[]): T[] {
@@ -72,14 +73,21 @@ async function load(): Promise<void> {
   }
 }
 
-function showSuccessMessage(message: string): void {
+function showMessage(
+  message: string,
+  type: "success" | "warning" = "success",
+): void {
   successMessage.value = message;
+  messageType.value = type;
   if (successMessageTimeout) {
     clearTimeout(successMessageTimeout);
   }
-  successMessageTimeout = setTimeout(() => {
-    successMessage.value = null;
-  }, 4000);
+  // Only confirmations time out; a warning needs the administrator to act on it.
+  if (type === "success") {
+    successMessageTimeout = setTimeout(() => {
+      successMessage.value = null;
+    }, 4000);
+  }
 }
 
 async function handleSetAktiv(id: string): Promise<void> {
@@ -92,9 +100,7 @@ async function handleSetAktiv(id: string): Promise<void> {
     aktivId.value = id;
     const namn = sorteringsordningar.value.find((row) => row.id === id)?.namn;
     if (namn) {
-      showSuccessMessage(
-        `"${namn}" är nu satt som aktiv och visas överst i listan.`,
-      );
+      showMessage(`"${namn}" är nu satt som aktiv och visas överst i listan.`);
     }
   } catch {
     error.value = "Kunde inte markera aktiv sorteringsordning.";
@@ -138,10 +144,29 @@ function formatDate(dateString: string): string {
 }
 
 onMounted(() => {
-  if (route.query.saved === "created") {
-    showSuccessMessage("Sorteringsordning har skapats.");
-  } else if (route.query.saved === "updated") {
-    showSuccessMessage("Sorteringsordning har uppdaterats.");
+  switch (route.query.saved) {
+    case "created": {
+      showMessage("Sorteringsordning har skapats.");
+      break;
+    }
+    case "updated": {
+      showMessage("Sorteringsordning har uppdaterats.");
+      break;
+    }
+    case "created-aktiv-failed": {
+      showMessage(
+        "Sorteringsordningen har skapats, men kunde inte markeras som aktiv. Markera den från listan.",
+        "warning",
+      );
+      break;
+    }
+    case "updated-aktiv-failed": {
+      showMessage(
+        "Sorteringsordningen har uppdaterats, men kunde inte markeras som aktiv. Markera den från listan.",
+        "warning",
+      );
+      break;
+    }
   }
   if (route.query.saved) {
     router.replace({ path: route.path });
@@ -184,7 +209,7 @@ onUnmounted(() => {
 
     <FMessageBox
       v-if="successMessage"
-      type="success"
+      :type="messageType"
       layout="short"
       class="success-message"
     >

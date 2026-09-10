@@ -336,19 +336,22 @@ async function handleSubmit(): Promise<void> {
     return;
   }
 
+  let aktivMisslyckades = false;
   if (isAktiv.value) {
     try {
       await setAktivSorteringsordning(created.id);
     } catch {
-      // The sorteringsordning was created, but couldn't be set as aktiv —
-      // don't block navigation or risk a duplicate on retry.
+      // The sorteringsordning itself was created, so navigation still proceeds and a
+      // retry would risk a duplicate — but the administrator has to be told the aktiv
+      // marking did not take effect.
+      aktivMisslyckades = true;
     }
   }
 
   try {
     await router.push({
       path: "/sorteringsordningar",
-      query: { saved: "created" },
+      query: { saved: aktivMisslyckades ? "created-aktiv-failed" : "created" },
     });
   } finally {
     isSubmitting.value = false;

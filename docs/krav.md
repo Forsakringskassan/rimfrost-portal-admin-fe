@@ -35,7 +35,7 @@ ska kunna observera och justera uppgiftsprioritering utan direktåtkomst till ba
 ### PAFE-FR-02 — Sorteringsordningar
 
 - **PAFE-FR-02.1** Gränssnittet ska visa samtliga konfigurerade sorteringsordningar med namn,
-  skapandedatum, antal regler och om den är satt som standard.
+  skapandedatum, antal regler och om den är markerad som aktiv.
 - **PAFE-FR-02.2** Administratören ska kunna skapa en ny sorteringsordning bestående av ett namn
   och en ordnad lista av prioritetsgrupper.
 - **PAFE-FR-02.3** Varje prioritetsgrupp ska kunna filtrera uppgifter via ett eller flera villkor
@@ -43,11 +43,11 @@ ska kunna observera och justera uppgiftsprioritering utan direktåtkomst till ba
 - **PAFE-FR-02.4** Prioritetsgrupper ska utvärderas i angiven ordning, där en uppgift tillhör den
   första grupp vars samtliga villkor den uppfyller.
 - **PAFE-FR-02.5** Administratören ska kunna redigera en befintlig sorteringsordning, inklusive
-  att sätta den som standard.
+  att markera den som aktiv.
 - **PAFE-FR-02.6** Administratören ska kunna ta bort en sorteringsordning, förutsatt att den inte
-  är satt som standard.
-- **PAFE-FR-02.7** Administratören ska kunna sätta en sorteringsordning som standard.
-- **PAFE-FR-02.8** Gränssnittet ska inte markera en sorteringsordning som standard förrän
+  är markerad som aktiv.
+- **PAFE-FR-02.7** Administratören ska kunna markera en sorteringsordning som aktiv.
+- **PAFE-FR-02.8** Gränssnittet ska inte markera en sorteringsordning som aktiv förrän
   bakomliggande tjänst har bekräftat ändringen.
 
 ### PAFE-FR-03 — Förhandsgranskning

@@ -183,6 +183,9 @@ const id = route.params.id as string;
 const namn = ref("");
 const entries = ref<FormEntry[]>([newEntry()]);
 const isAktiv = ref(false);
+// Snapshot, not the live isAktiv: binding :disabled to the ref that v-model
+// toggles would lock the checkbox the moment the administrator ticks it.
+const varAktivVidInlasning = ref(false);
 const isLoading = ref(false);
 const isSubmitting = ref(false);
 const isRemoving = ref(false);
@@ -247,6 +250,7 @@ async function load(): Promise<void> {
         ? sorteringsordning.entries.map(entryToForm)
         : [newEntry()];
     isAktiv.value = aktivSO?.id === id;
+    varAktivVidInlasning.value = isAktiv.value;
     pristineSnapshot = JSON.stringify({
       namn: namn.value,
       entries: entries.value,
@@ -396,19 +400,21 @@ async function handleSubmit(): Promise<void> {
     return;
   }
 
+  let aktivMisslyckades = false;
   if (isAktiv.value) {
     try {
       await setAktivSorteringsordning(id);
     } catch {
-      // The sorteringsordning was saved, but couldn't be set as aktiv —
-      // don't block navigation.
+      // The sorteringsordning itself saved, so navigation still proceeds — but the
+      // administrator has to be told the aktiv marking did not take effect.
+      aktivMisslyckades = true;
     }
   }
 
   try {
     await router.push({
       path: "/sorteringsordningar",
-      query: { saved: "updated" },
+      query: { saved: aktivMisslyckades ? "updated-aktiv-failed" : "updated" },
     });
   } finally {
     isSubmitting.value = false;
@@ -790,7 +796,11 @@ onMounted(load);
         <div class="aktiv-row">
           <div class="aktiv-option">
             <label class="aktiv-label">
-              <input v-model="isAktiv" type="checkbox" :disabled="isAktiv" />
+              <input
+                v-model="isAktiv"
+                type="checkbox"
+                :disabled="varAktivVidInlasning"
+              />
               Markera sorteringsordning som aktiv
             </label>
             <FTooltip
