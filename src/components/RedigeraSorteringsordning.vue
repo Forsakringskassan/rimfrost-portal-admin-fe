@@ -11,9 +11,9 @@ import {
 } from "@fkui/vue";
 import { onBeforeRouteLeave, useRoute, useRouter } from "vue-router";
 import type { Constraint, SortBy, SorteringsordningEntry } from "../types";
-import { getDefaultSorteringsordning } from "../utils/get-default-sorteringsordning";
+import { getAktivSorteringsordning } from "../utils/get-aktiv-sorteringsordning";
 import { getSorteringsordning } from "../utils/get-sorteringsordning";
-import { setDefaultSorteringsordning } from "../utils/set-default-sorteringsordning";
+import { setAktivSorteringsordning } from "../utils/set-aktiv-sorteringsordning";
 import { updateSorteringsordning } from "../utils/update-sorteringsordning";
 import SorteringsordningPreview from "./SorteringsordningPreview.vue";
 
@@ -182,7 +182,10 @@ const id = route.params.id as string;
 
 const namn = ref("");
 const entries = ref<FormEntry[]>([newEntry()]);
-const isDefault = ref(false);
+const isAktiv = ref(false);
+// Snapshot, not the live isAktiv: binding :disabled to the ref that v-model
+// toggles would lock the checkbox the moment the administrator ticks it.
+const varAktivVidInlasning = ref(false);
 const isLoading = ref(false);
 const isSubmitting = ref(false);
 const isRemoving = ref(false);
@@ -195,7 +198,7 @@ const hasUnsavedChanges = computed(
     JSON.stringify({
       namn: namn.value,
       entries: entries.value,
-      isDefault: isDefault.value,
+      isAktiv: isAktiv.value,
     }) !== pristineSnapshot,
 );
 let justSaved = false;
@@ -231,9 +234,9 @@ async function load(): Promise<void> {
   isLoading.value = true;
   error.value = null;
   try {
-    const [sorteringsordning, defaultSO] = await Promise.all([
+    const [sorteringsordning, aktivSO] = await Promise.all([
       getSorteringsordning(id),
-      getDefaultSorteringsordning(),
+      getAktivSorteringsordning(),
     ]);
     if (sorteringsordning === null) {
       error.value = "Sorteringsordningen hittades inte.";
@@ -246,11 +249,12 @@ async function load(): Promise<void> {
       sorteringsordning.entries.length > 0
         ? sorteringsordning.entries.map(entryToForm)
         : [newEntry()];
-    isDefault.value = defaultSO?.id === id;
+    isAktiv.value = aktivSO?.id === id;
+    varAktivVidInlasning.value = isAktiv.value;
     pristineSnapshot = JSON.stringify({
       namn: namn.value,
       entries: entries.value,
-      isDefault: isDefault.value,
+      isAktiv: isAktiv.value,
     });
   } catch {
     error.value = "Kunde inte hämta sorteringsordningen.";
@@ -386,15 +390,32 @@ function buildSpec() {
 async function handleSubmit(): Promise<void> {
   error.value = null;
   isSubmitting.value = true;
+
   try {
     await updateSorteringsordning(id, buildSpec());
     justSaved = true;
-    if (isDefault.value) {
-      await setDefaultSorteringsordning(id);
-    }
-    await router.push("/sorteringsordningar");
   } catch {
     error.value = "Kunde inte spara sorteringsordningen.";
+    isSubmitting.value = false;
+    return;
+  }
+
+  let aktivMisslyckades = false;
+  if (isAktiv.value) {
+    try {
+      await setAktivSorteringsordning(id);
+    } catch {
+      // The sorteringsordning itself saved, so navigation still proceeds — but the
+      // administrator has to be told the aktiv marking did not take effect.
+      aktivMisslyckades = true;
+    }
+  }
+
+  try {
+    await router.push({
+      path: "/sorteringsordningar",
+      query: { saved: aktivMisslyckades ? "updated-aktiv-failed" : "updated" },
+    });
   } finally {
     isSubmitting.value = false;
   }
@@ -772,11 +793,32 @@ onMounted(load);
 
         <SorteringsordningPreview :spec="buildSpec()" />
 
-        <div class="default-row">
-          <label class="default-label">
-            <input v-model="isDefault" type="checkbox" />
-            Sätt som default sorteringsordning
-          </label>
+        <div class="aktiv-row">
+          <div class="aktiv-option">
+            <label class="aktiv-label">
+              <input
+                v-model="isAktiv"
+                type="checkbox"
+                :disabled="varAktivVidInlasning"
+              />
+              Markera sorteringsordning som aktiv
+            </label>
+            <FTooltip
+              screen-reader-text="Läs mer om aktiv sorteringsordning"
+              header-tag="h2"
+            >
+              <template #header>Aktiv</template>
+              <template #body>
+                <p>
+                  Aktiv avser den sorteringsordning som används och styr i
+                  vilken ordning operativa uppgifter visas och tilldelas
+                  handläggare. Du kan ha flera sorteringsordningar, men endast
+                  en kan vara aktiv åt gången — markeringen tas inte bort, den
+                  flyttas när du markerar en annan.
+                </p>
+              </template>
+            </FTooltip>
+          </div>
         </div>
 
         <div class="form-actions">
@@ -899,11 +941,20 @@ onMounted(load);
   margin-bottom: 1.5rem;
 }
 
-.default-row {
+.aktiv-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
   margin-bottom: 1.5rem;
 }
 
-.default-label {
+.aktiv-option {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.aktiv-label {
   display: flex;
   align-items: center;
   gap: 0.5rem;

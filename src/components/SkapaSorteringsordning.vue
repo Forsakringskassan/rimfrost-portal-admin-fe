@@ -12,6 +12,7 @@ import {
 import { onBeforeRouteLeave, useRouter } from "vue-router";
 import type { Constraint, SortBy, SorteringsordningEntry } from "../types";
 import { createSorteringsordning } from "../utils/create-sorteringsordning";
+import { setAktivSorteringsordning } from "../utils/set-aktiv-sorteringsordning";
 import SorteringsordningPreview from "./SorteringsordningPreview.vue";
 
 const DATE_FIELDS = new Set(["skapad", "planerad_till"]);
@@ -152,6 +153,7 @@ function newEntry(): FormEntry {
 
 const namn = ref("");
 const entries = ref<FormEntry[]>([newEntry()]);
+const isAktiv = ref(false);
 const isSubmitting = ref(false);
 const isRemoving = ref(false);
 const error = ref<string | null>(null);
@@ -323,12 +325,34 @@ function buildSpec() {
 async function handleSubmit(): Promise<void> {
   error.value = null;
   isSubmitting.value = true;
+
+  let created;
   try {
-    await createSorteringsordning(buildSpec());
+    created = await createSorteringsordning(buildSpec());
     justSaved = true;
-    await router.push("/sorteringsordningar");
   } catch {
     error.value = "Kunde inte skapa sorteringsordningen.";
+    isSubmitting.value = false;
+    return;
+  }
+
+  let aktivMisslyckades = false;
+  if (isAktiv.value) {
+    try {
+      await setAktivSorteringsordning(created.id);
+    } catch {
+      // The sorteringsordning itself was created, so navigation still proceeds and a
+      // retry would risk a duplicate — but the administrator has to be told the aktiv
+      // marking did not take effect.
+      aktivMisslyckades = true;
+    }
+  }
+
+  try {
+    await router.push({
+      path: "/sorteringsordningar",
+      query: { saved: aktivMisslyckades ? "created-aktiv-failed" : "created" },
+    });
   } finally {
     isSubmitting.value = false;
   }
@@ -714,6 +738,30 @@ async function handleSubmit(): Promise<void> {
 
       <SorteringsordningPreview :spec="buildSpec()" />
 
+      <div class="aktiv-row">
+        <div class="aktiv-option">
+          <label class="aktiv-label">
+            <input v-model="isAktiv" type="checkbox" />
+            Markera sorteringsordning som aktiv
+          </label>
+          <FTooltip
+            screen-reader-text="Läs mer om aktiv sorteringsordning"
+            header-tag="h2"
+          >
+            <template #header>Aktiv</template>
+            <template #body>
+              <p>
+                Aktiv avser den sorteringsordning som används och styr i vilken
+                ordning operativa uppgifter visas och tilldelas handläggare. Du
+                kan ha flera sorteringsordningar, men endast en kan vara aktiv
+                åt gången — markeringen tas inte bort, den flyttas när du
+                markerar en annan.
+              </p>
+            </template>
+          </FTooltip>
+        </div>
+      </div>
+
       <div class="form-actions">
         <FButton type="submit" :disabled="isSubmitting">
           {{ isSubmitting ? "Sparar..." : "Spara sorteringsordning" }}
@@ -855,5 +903,26 @@ async function handleSubmit(): Promise<void> {
   display: flex;
   gap: 0.75rem;
   align-items: center;
+}
+
+.aktiv-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.aktiv-option {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.aktiv-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.95rem;
 }
 </style>

@@ -42,7 +42,7 @@ describe("deleteSorteringsordning", () => {
     expect(result).toBeNull();
   });
 
-  it("throws on conflict (409) when deleting the default", async () => {
+  it("throws on conflict (409) when deleting the aktiv one", async () => {
     mockFetch(409);
     await expect(deleteSorteringsordning("some-id")).rejects.toThrow(
       "HTTP 409",

@@ -1,10 +1,10 @@
 import { env } from "../config/env";
 
-export async function setDefaultSorteringsordning(
+export async function setAktivSorteringsordning(
   id: string,
 ): Promise<null | undefined> {
   const response = await fetch(
-    `${env.bffUrl}/admin/sorteringsordning/${encodeURIComponent(id)}/default`,
+    `${env.bffUrl}/admin/sorteringsordning/${encodeURIComponent(id)}/aktiv`,
     { method: "PUT" },
   );
 

@@ -15,11 +15,6 @@ const routes: RouteRecordRaw[] = [
     component: () => import("../components/OulUppgiftLista.vue"),
   },
   {
-    path: "/statistik",
-    name: "statistik",
-    component: () => import("../components/StatistikVy.vue"),
-  },
-  {
     path: "/sorteringsordningar",
     name: "sorteringsordningar",
     component: () => import("../components/SorteringsordningarVy.vue"),

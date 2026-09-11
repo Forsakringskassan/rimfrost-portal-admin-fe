@@ -1,8 +1,8 @@
 import { env } from "../config/env";
 import type { Sorteringsordning } from "../types";
 
-export async function getDefaultSorteringsordning(): Promise<Sorteringsordning | null> {
-  const response = await fetch(`${env.bffUrl}/admin/sorteringsordning/default`);
+export async function getAktivSorteringsordning(): Promise<Sorteringsordning | null> {
+  const response = await fetch(`${env.bffUrl}/admin/sorteringsordning/aktiv`);
 
   if (response.status === 404) {
     return null;
