@@ -1,1 +1,1 @@
-window._env_ = {};
+window.__PORTAL_ADMIN_FE_ENV__ = {};

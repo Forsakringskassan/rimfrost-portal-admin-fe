@@ -40,10 +40,10 @@ Ingen. Gränssnittet har ingen meddelandeintegration.
 
 ## Konfiguration
 
-| Egenskap                           | Beskrivning                     | Standardvärde                       |
-| ---------------------------------- | ------------------------------- | ----------------------------------- |
-| `VITE_BFF_URL`                     | BFF-url vid lokal utveckling    | `http://localhost:9091` (dev-proxy) |
-| `RUNTIME_BFF_URL` (`window._env_`) | BFF-url vid körning i container | —                                   |
+| Egenskap                                             | Beskrivning                     | Standardvärde                       |
+| ---------------------------------------------------- | ------------------------------- | ----------------------------------- |
+| `VITE_BFF_URL`                                       | BFF-url vid lokal utveckling    | `http://localhost:9091` (dev-proxy) |
+| `RUNTIME_BFF_URL` (`window.__PORTAL_ADMIN_FE_ENV__`) | BFF-url vid körning i container | —                                   |
 
 ## Liveness
 
