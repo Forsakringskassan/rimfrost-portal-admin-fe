@@ -2,6 +2,12 @@
 
 Changelog of rimfrost-portal-admin-fe.
 
+## 0.0.2 (2026-09-15)
+
+### Bug Fixes
+
+-  namespace the runtime-config global per app ([0ad40](https://github.com/Forsakringskassan/rimfrost-portal-admin-fe/commit/0ad4054e55e3cb1) LisaWedin_Ductus)  
+
 ## 0.0.1 (2026-09-11)
 
 ### Features
