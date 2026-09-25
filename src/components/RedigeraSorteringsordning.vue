@@ -948,10 +948,18 @@ onMounted(load);
   margin-bottom: 1.5rem;
 }
 
+/* FTooltip renders the i-button and the expandable .tooltip panel as separate
+   siblings here. The panel is width: 100%, so wrapping pushes it onto its own
+   row below the checkbox instead of squeezing it in beside the button. */
 .aktiv-option {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.375rem;
+}
+
+.aktiv-option :deep(.tooltip__button) {
+  transform: none;
 }
 
 .aktiv-label {
