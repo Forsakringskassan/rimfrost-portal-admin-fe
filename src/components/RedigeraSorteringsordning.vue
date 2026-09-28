@@ -3,6 +3,7 @@
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import {
   FButton,
+  FLoader,
   FSelectField,
   FTextField,
   FTooltip,
@@ -427,6 +428,14 @@ onMounted(load);
 <template>
   <div class="redigera-sorteringsordning">
     <h1 id="main-title" class="h1">Redigera sorteringsordning</h1>
+
+    <f-loader
+      :show="isLoading"
+      :delay="true"
+      style="margin-top: 15vh; display: block"
+    >
+      Hämtar sorteringsordningen...
+    </f-loader>
 
     <p v-if="error" class="error-message">{{ error }}</p>
 
