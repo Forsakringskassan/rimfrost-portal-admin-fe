@@ -200,7 +200,7 @@ onMounted(async () => {
               <FTableColumn name="handlaggarLabel" title="Handläggare" sortable>
                 {{ row.handlaggarLabel }}
               </FTableColumn>
-              <FTableColumn name="actions" title="" shrink>
+              <FTableColumn name="actions" title="Åtgärder" shrink>
                 <FTableButton
                   v-if="row.handlaggarId"
                   label
