@@ -1,4 +1,4 @@
-import { FButton, FValidationForm } from "@fkui/vue";
+import { FValidationForm } from "@fkui/vue";
 import { shallowMount } from "@vue/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import RedigeraSorteringsordning from "../RedigeraSorteringsordning.vue";
@@ -69,7 +69,6 @@ describe("RedigeraSorteringsordning", () => {
       "Kunde inte hämta sorteringsordningen.",
     );
     expect(wrapper.findComponent(FValidationForm).exists()).toBe(false);
-    expect(wrapper.find(".form-actions").exists()).toBe(true);
   });
 
   it("hides the form when the sorteringsordning is not found", async () => {
@@ -83,27 +82,6 @@ describe("RedigeraSorteringsordning", () => {
       "Sorteringsordningen hittades inte.",
     );
     expect(wrapper.findComponent(FValidationForm).exists()).toBe(false);
-  });
-
-  it("renders the form once a retry succeeds", async () => {
-    vi.mocked(getSorteringsordning).mockRejectedValueOnce(
-      new Error("BFF down"),
-    );
-    vi.mocked(getAktivSorteringsordning).mockResolvedValue(null);
-
-    const wrapper = mountView();
-    await flush();
-    expect(wrapper.findComponent(FValidationForm).exists()).toBe(false);
-
-    vi.mocked(getSorteringsordning).mockResolvedValue(sorteringsordning);
-    const [retryButton] = wrapper
-      .find(".form-actions")
-      .findAllComponents(FButton);
-    await retryButton.trigger("click");
-    await flush();
-
-    expect(wrapper.find(".error-message").exists()).toBe(false);
-    expect(wrapper.findComponent(FValidationForm).exists()).toBe(true);
   });
 
   it("renders the form on a successful load", async () => {

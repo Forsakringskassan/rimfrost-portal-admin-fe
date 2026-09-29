@@ -443,17 +443,6 @@ onMounted(load);
 
     <p v-if="error" class="error-message">{{ error }}</p>
 
-    <div v-if="loadFailed" class="form-actions">
-      <FButton type="button" @click="load">Försök igen</FButton>
-      <FButton
-        type="button"
-        variant="secondary"
-        @click="router.push('/sorteringsordningar')"
-      >
-        Tillbaka till sorteringsordningar
-      </FButton>
-    </div>
-
     <template v-if="!isLoading && !loadFailed">
       <FValidationForm @submit.prevent="handleSubmit">
         <FTextField v-model="namn" v-validation.required> Namn </FTextField>
