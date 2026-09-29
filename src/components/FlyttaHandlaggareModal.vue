@@ -19,24 +19,21 @@ const loadError = ref<string | null>(null);
 
 const value = ref({ handlaggareKey: "" });
 
+const valbaraHandlaggare = computed(() =>
+  handlaggareLista.value.filter(
+    (h) =>
+      !props.currentHandlaggarId ||
+      handlaggareKey(h.handlaggarId) !==
+        handlaggareKey(props.currentHandlaggarId),
+  ),
+);
+
 const selectedHandlaggarId = computed<HandlaggarId | null>(() => {
-  const found = handlaggareLista.value.find(
+  const found = valbaraHandlaggare.value.find(
     (h) => handlaggareKey(h.handlaggarId) === value.value.handlaggareKey,
   );
   return found?.handlaggarId ?? null;
 });
-
-const isSameAsCurrent = computed(
-  () =>
-    !!props.currentHandlaggarId &&
-    !!selectedHandlaggarId.value &&
-    selectedHandlaggarId.value.typId === props.currentHandlaggarId.typId &&
-    selectedHandlaggarId.value.varde === props.currentHandlaggarId.varde,
-);
-
-const canSubmit = computed(
-  () => !!selectedHandlaggarId.value && !isSameAsCurrent.value,
-);
 
 const noSelectionError = ref(false);
 
@@ -58,9 +55,6 @@ const buttons = computed(() => [
 function onSubmit() {
   if (!selectedHandlaggarId.value) {
     noSelectionError.value = true;
-    return;
-  }
-  if (!canSubmit.value) {
     return;
   }
   emit("confirm", selectedHandlaggarId.value);
@@ -92,17 +86,13 @@ onMounted(async () => {
           {{ isLoading ? "Hämtar handläggare..." : "Välj handläggare" }}
         </option>
         <option
-          v-for="h in handlaggareLista"
+          v-for="h in valbaraHandlaggare"
           :key="handlaggareKey(h.handlaggarId)"
           :value="handlaggareKey(h.handlaggarId)"
         >
           {{ handlaggareLabel(h) }}
         </option>
       </FSelectField>
-      <p v-if="isSameAsCurrent" class="error-message">
-        Målhandläggaren kan inte vara densamma som uppgiftens nuvarande
-        handläggare.
-      </p>
       <p v-if="noSelectionError && !selectedHandlaggarId" class="error-message">
         Välj en handläggare innan du flyttar.
       </p>
