@@ -191,7 +191,7 @@ onUnmounted(() => {
     </div>
 
     <FButton
-      v-if="isLoading || sorteringsordningar.length === 0"
+      v-if="!isLoading && !loadFailed && sorteringsordningar.length === 0"
       @click="router.push('/sorteringsordningar/skapa')"
     >
       Skapa ny
@@ -200,7 +200,7 @@ onUnmounted(() => {
     <f-loader
       :show="isLoading"
       :delay="true"
-      style="margin-top: 10vh; display: block"
+      style="margin-top: 15vh; display: block"
     >
       Hämtar sorteringsordningar...
     </f-loader>

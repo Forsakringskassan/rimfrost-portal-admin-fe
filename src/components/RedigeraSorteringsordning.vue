@@ -3,6 +3,7 @@
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import {
   FButton,
+  FLoader,
   FSelectField,
   FTextField,
   FTooltip,
@@ -190,6 +191,7 @@ const isLoading = ref(false);
 const isSubmitting = ref(false);
 const isRemoving = ref(false);
 const error = ref<string | null>(null);
+const loadFailed = ref(false);
 
 let pristineSnapshot = "";
 const hasUnsavedChanges = computed(
@@ -233,6 +235,7 @@ onBeforeRouteLeave(async () => {
 async function load(): Promise<void> {
   isLoading.value = true;
   error.value = null;
+  loadFailed.value = false;
   try {
     const [sorteringsordning, aktivSO] = await Promise.all([
       getSorteringsordning(id),
@@ -240,6 +243,7 @@ async function load(): Promise<void> {
     ]);
     if (sorteringsordning === null) {
       error.value = "Sorteringsordningen hittades inte.";
+      loadFailed.value = true;
       // pristineSnapshot stays "" here; hasUnsavedChanges guards on that,
       // so the unsaved-changes warning never fires when nothing loaded.
       return;
@@ -258,6 +262,7 @@ async function load(): Promise<void> {
     });
   } catch {
     error.value = "Kunde inte hämta sorteringsordningen.";
+    loadFailed.value = true;
   } finally {
     isLoading.value = false;
   }
@@ -428,9 +433,17 @@ onMounted(load);
   <div class="redigera-sorteringsordning">
     <h1 id="main-title" class="h1">Redigera sorteringsordning</h1>
 
+    <f-loader
+      :show="isLoading"
+      :delay="true"
+      style="margin-top: 15vh; display: block"
+    >
+      Hämtar sorteringsordningen...
+    </f-loader>
+
     <p v-if="error" class="error-message">{{ error }}</p>
 
-    <template v-if="!isLoading">
+    <template v-if="!isLoading && !loadFailed">
       <FValidationForm @submit.prevent="handleSubmit">
         <FTextField v-model="namn" v-validation.required> Namn </FTextField>
         <template #error-message>

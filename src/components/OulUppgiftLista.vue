@@ -129,7 +129,7 @@ onMounted(async () => {
     <f-loader
       :show="store.isLoading"
       :delay="true"
-      style="margin-top: 10vh; display: block"
+      style="margin-top: 15vh; display: block"
     >
       Hämtar uppgifter...
     </f-loader>
