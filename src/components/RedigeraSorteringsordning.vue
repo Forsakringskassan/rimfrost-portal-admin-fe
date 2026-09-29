@@ -191,6 +191,7 @@ const isLoading = ref(false);
 const isSubmitting = ref(false);
 const isRemoving = ref(false);
 const error = ref<string | null>(null);
+const loadFailed = ref(false);
 
 let pristineSnapshot = "";
 const hasUnsavedChanges = computed(
@@ -234,6 +235,7 @@ onBeforeRouteLeave(async () => {
 async function load(): Promise<void> {
   isLoading.value = true;
   error.value = null;
+  loadFailed.value = false;
   try {
     const [sorteringsordning, aktivSO] = await Promise.all([
       getSorteringsordning(id),
@@ -241,6 +243,7 @@ async function load(): Promise<void> {
     ]);
     if (sorteringsordning === null) {
       error.value = "Sorteringsordningen hittades inte.";
+      loadFailed.value = true;
       // pristineSnapshot stays "" here; hasUnsavedChanges guards on that,
       // so the unsaved-changes warning never fires when nothing loaded.
       return;
@@ -259,6 +262,7 @@ async function load(): Promise<void> {
     });
   } catch {
     error.value = "Kunde inte hämta sorteringsordningen.";
+    loadFailed.value = true;
   } finally {
     isLoading.value = false;
   }
@@ -439,7 +443,18 @@ onMounted(load);
 
     <p v-if="error" class="error-message">{{ error }}</p>
 
-    <template v-if="!isLoading">
+    <div v-if="loadFailed" class="form-actions">
+      <FButton type="button" @click="load">Försök igen</FButton>
+      <FButton
+        type="button"
+        variant="secondary"
+        @click="router.push('/sorteringsordningar')"
+      >
+        Tillbaka till sorteringsordningar
+      </FButton>
+    </div>
+
+    <template v-if="!isLoading && !loadFailed">
       <FValidationForm @submit.prevent="handleSubmit">
         <FTextField v-model="namn" v-validation.required> Namn </FTextField>
         <template #error-message>
