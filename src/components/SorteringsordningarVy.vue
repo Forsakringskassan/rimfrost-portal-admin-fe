@@ -224,6 +224,7 @@ onUnmounted(() => {
       <div v-else class="table-section">
         <FSortFilterDataset
           :data="sortableSorteringsordningar"
+          :show-sort="false"
           :sortable-attributes="{
             namn: 'Namn',
             skapad: 'Skapad',
@@ -323,18 +324,13 @@ onUnmounted(() => {
   padding: 1.5rem 2rem;
 }
 
-.table-section {
-  margin-top: 1rem;
-}
-
 /* FKUI's own margins here are asymmetric - the button has 0.25rem top and
    1.5rem bottom - and align-self centres the margin box, so the contents
    end up 4px apart. Equal top and bottom margins make the centres
    coincide. Below 640px the controls stack and keep FKUI defaults. */
 @media (min-width: 640px) {
   .table-section :deep(.sort-filter-dataset__toolbar__header),
-  .table-section :deep(.text-field--inline),
-  .table-section :deep(.select-field--inline) {
+  .table-section :deep(.text-field--inline) {
     margin-top: 0.5rem;
     margin-bottom: 0.5rem;
   }
@@ -344,7 +340,6 @@ onUnmounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
 }
 
 /* Nudge Namn (1st column), Skapad (2nd column), Regler (3rd column)

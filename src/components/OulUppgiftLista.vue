@@ -106,6 +106,14 @@ const movingUppgift = computed(() =>
   store.uppgiftLista.find((item) => item.uppgiftId === movingUppgiftId.value),
 );
 
+const visaTabell = computed(
+  () =>
+    !store.isLoading &&
+    !store.error &&
+    store.hasFetched &&
+    store.totalUppgifter <= store.uppgiftLista.length,
+);
+
 onMounted(async () => {
   if (!store.hasFetched) {
     try {
@@ -124,7 +132,7 @@ onMounted(async () => {
 
 <template>
   <div class="oul-uppgift-lista">
-    <h1 id="main-title" class="h1">Operativa uppgifter</h1>
+    <h1 v-if="!visaTabell" id="main-title" class="h1">Operativa uppgifter</h1>
 
     <f-loader
       :show="store.isLoading"
@@ -135,8 +143,6 @@ onMounted(async () => {
     </f-loader>
 
     <p v-if="store.error" class="error-message">{{ store.error }}</p>
-    <p v-if="unassignError" class="error-message">{{ unassignError }}</p>
-    <p v-if="moveError" class="error-message">{{ moveError }}</p>
 
     <FlyttaHandlaggareModal
       v-if="movingUppgiftId"
@@ -160,8 +166,9 @@ onMounted(async () => {
       </p>
 
       <FSortFilterDataset
-        v-else
+        v-if="visaTabell"
         :data="sortableUppgiftLista"
+        :show-sort="false"
         :sortable-attributes="{
           skapad: 'Skapad',
           regel: 'Regeltyp',
@@ -173,7 +180,14 @@ onMounted(async () => {
         :default-sort-ascending="store.sortAscending"
         @used-sort-attributes="onSortChange"
       >
+        <template #header="{ slotClass }">
+          <h1 id="main-title" class="h1" :class="slotClass">
+            Operativa uppgifter
+          </h1>
+        </template>
         <template #default="{ sortFilterResult }">
+          <p v-if="unassignError" class="error-message">{{ unassignError }}</p>
+          <p v-if="moveError" class="error-message">{{ moveError }}</p>
           <FInteractiveTable :rows="sortFilterResult" key-attribute="uppgiftId">
             <template #default="{ row }">
               <FTableColumn name="handlaggningId" title="ID" shrink>
@@ -231,6 +245,17 @@ onMounted(async () => {
 <style scoped>
 .oul-uppgift-lista {
   padding: 1.5rem 2rem;
+}
+
+/* Title and search share a row; equal margins keep them vertically
+   centred (same approach as SorteringsordningarVy). Below 640px the
+   row stacks and keeps FKUI defaults. */
+@media (min-width: 640px) {
+  .oul-uppgift-lista :deep(.sort-filter-dataset__toolbar__header),
+  .oul-uppgift-lista :deep(.text-field--inline) {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
 }
 
 .id-cell {
