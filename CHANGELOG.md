@@ -2,6 +2,22 @@
 
 Changelog of rimfrost-portal-admin-fe.
 
+## 0.0.3 (2026-11-05)
+
+### Bug Fixes
+
+-  remove sort dropdown above tables and tighten toolbar layout (FKPOC-1092) ([00322](https://github.com/Forsakringskassan/rimfrost-portal-admin-fe/commit/003225a14826e1a) julolsso)  
+-  hide current handläggare from move target list (FKPOC-1093) ([66342](https://github.com/Forsakringskassan/rimfrost-portal-admin-fe/commit/6634278b1c44f6e) julolsso)  
+-  add header to action column in OUL task list (FKPOC-1089) ([8dadc](https://github.com/Forsakringskassan/rimfrost-portal-admin-fe/commit/8dadc02d75d39eb) julolsso)  
+-  hide form when sorteringsordning fails to load (FKPOC-1087) ([124d4](https://github.com/Forsakringskassan/rimfrost-portal-admin-fe/commit/124d42dab7cf6c3) julolsso)  
+-  add missing loader and adjust loader placement (FKPOC-1087) ([98f51](https://github.com/Forsakringskassan/rimfrost-portal-admin-fe/commit/98f515dcdaf54dc) julolsso)  
+-  move aktiv tooltip panel below the checkbox (FKPOC-1088) ([6b2e8](https://github.com/Forsakringskassan/rimfrost-portal-admin-fe/commit/6b2e8ed78ccf151) julolsso)  
+
+### Other changes
+
+
+## rimfrost-1_2 (2026-09-16)
+
 ## 0.0.2 (2026-09-15)
 
 ### Bug Fixes
